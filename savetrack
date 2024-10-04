@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import csv
+from datetime import date
+from urllib.parse import quote_plus
+from urllib.request import Request, urlopen
+
+PLAYLIST_FOLDER = os.environ.get('PLAYLIST_FOLDER', '')
+
+def get_youtube_url(query):
+    url = f"https://www.youtube.com/results?search_query={quote_plus(query)}"
+    req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    response = urlopen(req).read().decode('utf-8')
+    
+    start_index = response.find('/watch?v=')
+    if start_index != -1:
+        end_index = response.find('"', start_index)
+        video_id = response[start_index:end_index]
+        return f"https://www.youtube.com{video_id}"
+    return ""
+
+def save_track(artist, title, playlist):
+    if not PLAYLIST_FOLDER:
+        raise EnvironmentError("PLAYLIST_FOLDER environment variable is not set.")
+    
+    os.makedirs(PLAYLIST_FOLDER, exist_ok=True)
+    csv_file = os.path.join(PLAYLIST_FOLDER, f"{playlist}.csv")
+    
+    youtube_url = get_youtube_url(f"{artist} - {title}")
+    today = date.today().isoformat()
+    
+    with open(csv_file, 'a', newline='') as file:
+        csv.writer(file).writerow([today, artist, title, youtube_url])
+    
+    print(f"Track saved to {csv_file}")
+
+def list_playlists():
+    if not PLAYLIST_FOLDER:
+        raise EnvironmentError("PLAYLIST_FOLDER environment variable is not set.")
+    
+    if not os.path.exists(PLAYLIST_FOLDER):
+        print("No playlists found.")
+        return
+    
+    playlists = [f for f in os.listdir(PLAYLIST_FOLDER) if f.endswith('.csv')]
+    if not playlists:
+        print("No playlists found.")
+    else:
+        print("Available playlists:")
+        for playlist in playlists:
+            print(f"- {os.path.splitext(playlist)[0]}")
+
+def print_usage():
+    print("Usage:")
+    print("  To list playlists: python savetrack.py ls")
+    print("  To save a track: python savetrack.py <artist> <track_title> <playlist_name>")
+
+def main():
+    if len(sys.argv) == 2 and sys.argv[1] == "ls":
+        list_playlists()
+    elif len(sys.argv) == 4:
+        artist, title, playlist = sys.argv[1], sys.argv[2], sys.argv[3]
+        save_track(artist, title, playlist)
+    else:
+        print_usage()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except EnvironmentError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        sys.exit(1)
