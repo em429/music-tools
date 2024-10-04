@@ -16,7 +16,7 @@ fi
 # Function to list available playlists
 list_playlists() {
     echo "Available playlists:"
-    ls -1 "$PLAYLIST_FOLDER"/*.csv | xargs -n 1 basename | sed 's/\.csv$//'
+    ls -1 "$PLAYLIST_FOLDER"/*.csv | xargs -n 1 basename | sed 's/\.csv$//' | sed 's/^/- /'
 }
 
 # Check for the correct number of arguments
