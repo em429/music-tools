@@ -4,20 +4,70 @@ import os
 import math
 import re
 import random
-from glob import glob
-
-import pandas as pd
-from flask import Flask, render_template_string, request
+import sqlite3
+from flask import Flask, render_template_string, request, g
 
 app = Flask(__name__)
 
-PLAYLIST_FOLDER = os.environ.get('PLAYLIST_FOLDER', '.')
+DATABASE = 'playlists.db'
 
-def get_playlist_files():
-    return [os.path.basename(f) for f in glob(os.path.join(PLAYLIST_FOLDER, '*.csv'))]
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+        db.row_factory = sqlite3.Row
+    return db
 
-def read_playlist(filename):
-    return pd.read_csv(os.path.join(PLAYLIST_FOLDER, filename), header=None, names=['date', 'artist', 'title', 'url'])
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
+
+def init_db():
+    with app.app_context():
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS tracks
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+             date TEXT,
+             artist TEXT,
+             title TEXT,
+             url TEXT)
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS playlists
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+             title TEXT)
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS playlist_tracks
+            (playlist_id INTEGER,
+             track_id INTEGER,
+             FOREIGN KEY(playlist_id) REFERENCES playlists(id),
+             FOREIGN KEY(track_id) REFERENCES tracks(id),
+             PRIMARY KEY(playlist_id, track_id))
+        ''')
+        db.commit()
+
+def get_playlists():
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT title FROM playlists")
+    return [row['title'] for row in cursor.fetchall()]
+
+def read_playlist(playlist_name):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('''
+        SELECT t.date, t.artist, t.title, t.url
+        FROM tracks t
+        JOIN playlist_tracks pt ON t.id = pt.track_id
+        JOIN playlists p ON p.id = pt.playlist_id
+        WHERE p.title = ?
+    ''', (playlist_name,))
+    return cursor.fetchall()
 
 def get_youtube_id(url):
     # Extract YouTube video ID from URL
@@ -25,30 +75,29 @@ def get_youtube_id(url):
     return match.group(1) if match else None
 
 def get_random_video():
-    all_videos = []
-    for playlist_file in get_playlist_files():
-        playlist = read_playlist(playlist_file)
-        all_videos.extend(playlist.to_dict('records'))
-    return random.choice(all_videos) if all_videos else None
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT date, artist, title, url FROM tracks ORDER BY RANDOM() LIMIT 1")
+    return cursor.fetchone()
 
 @app.route('/')
 def index():
-    playlists = [os.path.splitext(f)[0] for f in get_playlist_files()]
+    playlists = get_playlists()
     random_video = get_random_video()
     return render_template_string(BASE_TEMPLATE, playlists=playlists, content=render_template_string(INDEX_TEMPLATE, random_video=random_video, get_youtube_id=get_youtube_id), get_youtube_id=get_youtube_id)
 
 @app.route('/playlist/<playlist_name>')
 def playlist(playlist_name):
-    playlists = [os.path.splitext(f)[0] for f in get_playlist_files()]
-    playlist = read_playlist(f"{playlist_name}.csv")
+    playlists = get_playlists()
+    playlist = read_playlist(playlist_name)
     page = request.args.get('page', 1, type=int)
-    per_page = 9
+    per_page = 15
     total_pages = math.ceil(len(playlist) / per_page)
     
     start = (page - 1) * per_page
     end = start + per_page
     
-    playlist_page = playlist.iloc[start:end]
+    playlist_page = playlist[start:end]
     
     return render_template_string(BASE_TEMPLATE, playlists=playlists, content=render_template_string(PLAYLIST_TEMPLATE, playlist_page=playlist_page, page=page, total_pages=total_pages, get_youtube_id=get_youtube_id, playlist_name=playlist_name), get_youtube_id=get_youtube_id)
 
@@ -143,19 +192,19 @@ INDEX_TEMPLATE = '''
     {% if random_video %}
     <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
         <div class="aspect-w-16 aspect-h-9 relative">
-            <img src="https://img.youtube.com/vi/{{ get_youtube_id(random_video.url) }}/0.jpg" 
-                 alt="{{ random_video.title }}" 
+            <img src="https://img.youtube.com/vi/{{ get_youtube_id(random_video['url']) }}/0.jpg" 
+                 alt="{{ random_video['title'] }}" 
                  class="w-full h-full object-cover cursor-pointer"
-                 onclick="playAudio('{{ get_youtube_id(random_video.url) }}', this)">
-            <div id="player-{{ get_youtube_id(random_video.url) }}" class="absolute inset-0 hidden"></div>
+                 onclick="playAudio('{{ get_youtube_id(random_video['url']) }}', this)">
+            <div id="player-{{ get_youtube_id(random_video['url']) }}" class="absolute inset-0 hidden"></div>
             <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-200">
-                <div id="progress-{{ get_youtube_id(random_video.url) }}" class="h-full bg-red-500 w-0"></div>
+                <div id="progress-{{ get_youtube_id(random_video['url']) }}" class="h-full bg-red-500 w-0"></div>
             </div>
         </div>
         <div class="p-4">
-            <h2 class="text-xl font-semibold mb-2 text-slate-800">{{ random_video.title }}</h2>
-            <p class="text-slate-600 mb-2">{{ random_video.artist }}</p>
-            <p class="text-sm text-slate-500">{{ random_video.date }}</p>
+            <h2 class="text-xl font-semibold mb-2 text-slate-800">{{ random_video['title'] }}</h2>
+            <p class="text-slate-600 mb-2">{{ random_video['artist'] }}</p>
+            <p class="text-sm text-slate-500">{{ random_video['date'] }}</p>
         </div>
     </div>
     {% else %}
@@ -166,22 +215,22 @@ INDEX_TEMPLATE = '''
 
 PLAYLIST_TEMPLATE = '''
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-    {% for _, track in playlist_page.iterrows() %}
+    {% for track in playlist_page %}
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <div class="aspect-w-16 aspect-h-9 relative">
-            <img src="https://img.youtube.com/vi/{{ get_youtube_id(track.url) }}/0.jpg" 
-                 alt="{{ track.title }}" 
+            <img src="https://img.youtube.com/vi/{{ get_youtube_id(track['url']) }}/0.jpg" 
+                 alt="{{ track['title'] }}" 
                  class="w-full h-full object-cover cursor-pointer"
-                 onclick="playAudio('{{ get_youtube_id(track.url) }}', this)">
-            <div id="player-{{ get_youtube_id(track.url) }}" class="absolute inset-0 hidden"></div>
+                 onclick="playAudio('{{ get_youtube_id(track['url']) }}', this)">
+            <div id="player-{{ get_youtube_id(track['url']) }}" class="absolute inset-0 hidden"></div>
             <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-200">
-                <div id="progress-{{ get_youtube_id(track.url) }}" class="h-full bg-red-500 w-0"></div>
+                <div id="progress-{{ get_youtube_id(track['url']) }}" class="h-full bg-red-500 w-0"></div>
             </div>
         </div>
         <div class="p-4">
-            <h2 class="font-semibold mb-2 text-slate-800 truncate">{{ track.title }}</h2>
-            <p class="text-sm text-slate-600 mb-2">{{ track.artist }}</p>
-            <p class="place-item-bottom text-xs text-slate-500">{{ track.date }}</p>
+            <h2 class="font-semibold mb-2 text-slate-800 truncate">{{ track['title'] }}</h2>
+            <p class="text-sm text-slate-600 mb-2">{{ track['artist'] }}</p>
+            <p class="place-item-bottom text-xs text-slate-500">{{ track['date'] }}</p>
         </div>
     </div>
     {% endfor %}
@@ -201,4 +250,5 @@ PLAYLIST_TEMPLATE = '''
 '''
 
 if __name__ == '__main__':
+    init_db()
     app.run(debug=True, host="0.0.0.0", port=5001)
