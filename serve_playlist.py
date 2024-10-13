@@ -74,7 +74,7 @@ def get_youtube_id(url):
     match = re.search(r'(?:v=|\/)([0-9A-Za-z_-]{11}).*', url)
     return match.group(1) if match else None
 
-def get_random_video():
+def get_random_track():
     db = get_db()
     cursor = db.cursor()
     cursor.execute("SELECT date, artist, title, url FROM tracks ORDER BY RANDOM() LIMIT 1")
@@ -83,8 +83,8 @@ def get_random_video():
 @app.route('/')
 def index():
     playlists = get_playlists()
-    random_video = get_random_video()
-    return render_template_string(BASE_TEMPLATE, playlists=playlists, content=render_template_string(INDEX_TEMPLATE, random_video=random_video, get_youtube_id=get_youtube_id), get_youtube_id=get_youtube_id)
+    random_track = get_random_track()
+    return render_template_string(BASE_TEMPLATE, playlists=playlists, content=render_template_string(INDEX_TEMPLATE, random_track=random_track, get_youtube_id=get_youtube_id), get_youtube_id=get_youtube_id)
 
 @app.route('/playlist/<playlist_name>')
 def playlist(playlist_name):
@@ -189,24 +189,24 @@ BASE_TEMPLATE = '''
 INDEX_TEMPLATE = '''
 <div class="text-center">
     <h2 class="text-2xl font-semibold mb-4">Random Track</h2>
-    {% if random_video %}
+    {% if random_track %}
     <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
         <div class="aspect-w-16 aspect-h-9 relative">
-            <img src="https://img.youtube.com/vi/{{ get_youtube_id(random_video['url']) }}/0.jpg" 
-                 alt="{{ random_video['title'] }}" 
+            <img src="https://img.youtube.com/vi/{{ get_youtube_id(random_track['url']) }}/0.jpg" 
+                 alt="{{ random_track['title'] }}" 
                  class="w-full h-full object-cover cursor-pointer"
-                 onclick="playAudio('{{ get_youtube_id(random_video['url']) }}', this)">
-            <div id="player-{{ get_youtube_id(random_video['url']) }}" class="absolute inset-0 hidden"></div>
+                 onclick="playAudio('{{ get_youtube_id(random_track['url']) }}', this)">
+            <div id="player-{{ get_youtube_id(random_track['url']) }}" class="absolute inset-0 hidden"></div>
             <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-200">
-                <div id="progress-{{ get_youtube_id(random_video['url']) }}" class="h-full bg-red-500 w-0"></div>
+                <div id="progress-{{ get_youtube_id(random_track['url']) }}" class="h-full bg-red-500 w-0"></div>
             </div>
         </div>
         <div class="p-4">
-            <a href="{{random_video['url']}}" class="hover:underline" target="_blank">
-                <h2 class="text-xl font-semibold mb-2 text-slate-800">{{ random_video['title'] }}</h2>
+            <a href="{{random_track['url']}}" class="hover:underline" target="_blank">
+                <h2 class="text-xl font-semibold mb-2 text-slate-800">{{ random_track['title'] }}</h2>
             </a>
-            <p class="text-slate-600 mb-2">{{ random_video['artist'] }}</p>
-            <p class="text-sm text-slate-500">{{ random_video['date'] }}</p>
+            <p class="text-slate-600 mb-2">{{ random_track['artist'] }}</p>
+            <p class="text-sm text-slate-500">{{ random_track['date'] }}</p>
         </div>
     </div>
     {% else %}
