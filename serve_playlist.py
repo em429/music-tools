@@ -202,7 +202,9 @@ INDEX_TEMPLATE = '''
             </div>
         </div>
         <div class="p-4">
-            <h2 class="text-xl font-semibold mb-2 text-slate-800">{{ random_video['title'] }}</h2>
+            <a href="{{random_video['url']}}" class="hover:underline" target="_blank">
+                <h2 class="text-xl font-semibold mb-2 text-slate-800">{{ random_video['title'] }}</h2>
+            </a>
             <p class="text-slate-600 mb-2">{{ random_video['artist'] }}</p>
             <p class="text-sm text-slate-500">{{ random_video['date'] }}</p>
         </div>
@@ -228,7 +230,9 @@ PLAYLIST_TEMPLATE = '''
             </div>
         </div>
         <div class="p-4">
-            <h2 class="font-semibold mb-2 text-slate-800 truncate">{{ track['title'] }}</h2>
+            <a href="{{track['url']}}" class="hover:underline" target="_blank">
+                <h2 class="font-semibold mb-2 text-slate-800 truncate">{{ track['title'] }}</h2>
+            </a>
             <p class="text-sm text-slate-600 mb-2">{{ track['artist'] }}</p>
             <p class="place-item-bottom text-xs text-slate-500">{{ track['date'] }}</p>
         </div>
