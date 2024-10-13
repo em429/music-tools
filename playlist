@@ -1,11 +1,11 @@
 #!/bin/bash
-# Play tracks from a CSV in PLAYLIST_FOLDER.
+# Play tracks / radio from a CSV in PLAYLIST_FOLDER.
 #
 # Usage:
 # 
-# playtracks ls                        --> list available playlists
-# playtracks <playlist_name>           --> play PLAYLIST_FOLDER/<playlist_name>.csv
-# playtracks <playlist_name> --shuffle --> play playlist in random order
+# playlist ls                           --> list available playlists
+# playlist <playlist_name>              --> play PLAYLIST_FOLDER/<playlist_name>.csv
+# playlist <playlist_name> --no-shuffle --> turn off random order
 
 # Check if PLAYLIST_FOLDER is set
 if [ -z "$PLAYLIST_FOLDER" ]; then
@@ -21,7 +21,7 @@ list_playlists() {
 
 # Check for the correct number of arguments
 if [ $# -eq 0 ] || [ $# -gt 2 ]; then
-    echo "Usage: $0 <playlist_name> [--shuffle]"
+    echo "Usage: $0 <playlist_name> [--no-shuffle]"
     echo "       $0 ls"
     exit 1
 fi
@@ -34,11 +34,11 @@ fi
 
 playlist_name="$1"
 playlist_file="$PLAYLIST_FOLDER/${playlist_name}.csv"
-shuffle_option=""
+shuffle_option="--shuffle"
 
 # Check for shuffle option
-if [ "$2" = "--shuffle" ]; then
-    shuffle_option="--shuffle"
+if [ "$2" = "--no-shuffle" ]; then
+    shuffle_option=""
 fi
 
 if [ ! -f "$playlist_file" ]; then
