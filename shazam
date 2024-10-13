@@ -6,7 +6,7 @@
 # 
 # Changes:
 # - Ported to macOS
-# - Uses `savetrack` script to save tracks to a playlist file with youtube links
+# - Uses `playlistctl` script to save tracks to a playlist file with youtube links
 #
 # Requires curl, ffmpeg, jq
 
@@ -112,9 +112,9 @@ query() {
     read -p "Do you want to save this track to a playlist? (y/n) " save_choice
     if [[ $save_choice =~ ^[Yy]$ ]]; then
         echo "Available playlists:"
-        savetrack ls
+        playlistctl ls
         read -p "Enter the name of the playlist to save to: " playlist_name
-        savetrack "$artist" "$title" "$playlist_name"
+        playlistctl save "$artist" "$title" "$playlist_name"
     fi
 }
 
