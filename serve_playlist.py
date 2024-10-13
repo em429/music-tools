@@ -72,7 +72,6 @@ BASE_TEMPLATE = '''
         </div>
     </nav>
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-4xl font-bold mb-8 text-center text-slate-800">Playlist Viewer</h1>
         {{ content | safe }}
     </div>
     <script>
@@ -140,14 +139,9 @@ BASE_TEMPLATE = '''
 
 INDEX_TEMPLATE = '''
 <div class="text-center">
-    <h2 class="text-2xl font-semibold mb-4">Random Video</h2>
+    <h2 class="text-2xl font-semibold mb-4">Random Track</h2>
     {% if random_video %}
     <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="p-4">
-            <h2 class="text-xl font-semibold mb-2 text-slate-800">{{ random_video.title }}</h2>
-            <p class="text-slate-600 mb-2">{{ random_video.artist }}</p>
-            <p class="text-sm text-slate-500">{{ random_video.date }}</p>
-        </div>
         <div class="aspect-w-16 aspect-h-9 relative">
             <img src="https://img.youtube.com/vi/{{ get_youtube_id(random_video.url) }}/0.jpg" 
                  alt="{{ random_video.title }}" 
@@ -158,6 +152,11 @@ INDEX_TEMPLATE = '''
                 <div id="progress-{{ get_youtube_id(random_video.url) }}" class="h-full bg-red-500 w-0"></div>
             </div>
         </div>
+        <div class="p-4">
+            <h2 class="text-xl font-semibold mb-2 text-slate-800">{{ random_video.title }}</h2>
+            <p class="text-slate-600 mb-2">{{ random_video.artist }}</p>
+            <p class="text-sm text-slate-500">{{ random_video.date }}</p>
+        </div>
     </div>
     {% else %}
     <p>No videos available.</p>
@@ -166,14 +165,9 @@ INDEX_TEMPLATE = '''
 '''
 
 PLAYLIST_TEMPLATE = '''
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
     {% for _, track in playlist_page.iterrows() %}
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="p-4">
-            <h2 class="text-xl font-semibold mb-2 text-slate-800">{{ track.title }}</h2>
-            <p class="text-slate-600 mb-2">{{ track.artist }}</p>
-            <p class="text-sm text-slate-500">{{ track.date }}</p>
-        </div>
         <div class="aspect-w-16 aspect-h-9 relative">
             <img src="https://img.youtube.com/vi/{{ get_youtube_id(track.url) }}/0.jpg" 
                  alt="{{ track.title }}" 
@@ -183,6 +177,11 @@ PLAYLIST_TEMPLATE = '''
             <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-200">
                 <div id="progress-{{ get_youtube_id(track.url) }}" class="h-full bg-red-500 w-0"></div>
             </div>
+        </div>
+        <div class="p-4">
+            <h2 class="font-semibold mb-2 text-slate-800 truncate">{{ track.title }}</h2>
+            <p class="text-sm text-slate-600 mb-2">{{ track.artist }}</p>
+            <p class="place-item-bottom text-xs text-slate-500">{{ track.date }}</p>
         </div>
     </div>
     {% endfor %}
@@ -202,4 +201,4 @@ PLAYLIST_TEMPLATE = '''
 '''
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5001)
