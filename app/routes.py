@@ -68,9 +68,10 @@ def remove_playlist(playlist_name):
         cursor.execute("DELETE FROM playlists WHERE title = ?", (playlist_name,))
         db.commit()
         flash(f'Playlist "{playlist_name}" removed successfully')
+        return redirect(url_for('main.index'))
     else:
         flash(f'Cannot remove playlist "{playlist_name}". It is not empty.')
-    return redirect(url_for('main.index'))
+        return redirect(url_for('main.playlist', playlist_name=playlist_name))
 
 @main.route('/add_track', methods=['POST'])
 def add_track():
