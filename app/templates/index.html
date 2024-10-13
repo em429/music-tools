@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl container mx-auto">
+<div class="text-center">
+    <h2 class="text-2xl font-semibold mb-4">Random Track</h2>
+    {% if random_track %}
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="aspect-w-16 aspect-h-9 relative">
+            <img src="https://img.youtube.com/vi/{{ get_youtube_id(random_track['url']) }}/0.jpg" 
+                 alt="{{ random_track['title'] }}" 
+                 class="w-full h-full object-cover cursor-pointer"
+                 onclick="playAudio('{{ get_youtube_id(random_track['url']) }}', this)">
+            <div id="player-{{ get_youtube_id(random_track['url']) }}" class="absolute inset-0 hidden"></div>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-200">
+                <div id="progress-{{ get_youtube_id(random_track['url']) }}" class="h-full bg-red-500 w-0"></div>
+            </div>
+        </div>
+        <div class="p-4">
+            <a href="{{random_track['url']}}" class="hover:underline" target="_blank">
+                <h2 class="text-xl font-semibold mb-2 text-slate-800">{{ random_track['title'] }}</h2>
+            </a>
+            <a href="https://www.discogs.com/search?q={{ random_track['artist']|urlencode }}&type=all" class="hover:underline" target="_blank">
+                <p class="text-slate-600 mb-2">{{ random_track['artist'] }}</p>
+            </a>
+            <p class="text-sm text-slate-500">{{ random_track['date'] }}</p>
+        </div>
+    </div>
+    {% else %}
+    <p>No videos available.</p>
+    {% endif %}
+</div>
+<div class="mt-8">
+    <h3 class="text-xl font-semibold mb-4">Create New Playlist</h3>
+    <form action="{{ url_for('main.create_playlist') }}" method="post" class="flex items-center">
+        <input type="text" name="playlist_name" placeholder="Enter playlist name" required class="flex-grow p-2 border rounded-l">
+        <button type="submit" class="bg-sky-800 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-r">Create</button>
+    </form>
+</div>
+<div class="mt-8">
+    <h3 class="text-xl font-semibold mb-4">Remove Empty Playlist</h3>
+    <form action="{{ url_for('main.remove_playlist', playlist_name='') }}" method="post" class="flex items-center" id="remove-playlist-form">
+        <select name="playlist_name" required class="flex-grow p-2 border rounded-l">
+            <option value="">Select a playlist</option>
+            {% for playlist in playlists %}
+            <option value="{{ playlist }}">{{ playlist }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-r">Remove</button>
+    </form>
+</div>
+</div>
+<script>
+document.getElementById('remove-playlist-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var playlistName = this.querySelector('select[name="playlist_name"]').value;
+    if (playlistName && confirm('Are you sure you want to remove the playlist "' + playlistName + '"?')) {
+        this.action = "{{ url_for('main.remove_playlist', playlist_name='') }}" + playlistName;
+        this.submit();
+    }
+});
+</script>
+{% endblock %}

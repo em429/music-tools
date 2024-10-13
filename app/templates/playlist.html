@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="text-2xl font-semibold mb-4">{{ playlist_name }}</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+    {% for track in playlist_page %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="aspect-w-16 aspect-h-9 relative">
+            <img src="https://img.youtube.com/vi/{{ get_youtube_id(track['url']) }}/0.jpg" 
+                 alt="{{ track['title'] }}" 
+                 class="w-full h-full object-cover cursor-pointer"
+                 onclick="playAudio('{{ get_youtube_id(track['url']) }}', this)">
+            <div id="player-{{ get_youtube_id(track['url']) }}" class="absolute inset-0 hidden"></div>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-200">
+                <div id="progress-{{ get_youtube_id(track['url']) }}" class="h-full bg-red-500 w-0"></div>
+            </div>
+        </div>
+        <div class="p-4">
+            <a href="{{track['url']}}" class="hover:underline" target="_blank">
+                <h2 class="font-semibold mb-2 text-slate-800 truncate">{{ track['title'] }}</h2>
+            </a>
+            <a href="https://www.discogs.com/search?q={{ track['artist']|urlencode }}&type=all" class="hover:underline" target="_blank">
+                <p class="text-sm text-slate-600 mb-2">{{ track['artist'] }}</p>
+            </a>
+            <p class="text-xs text-slate-500 mb-2">{{ track['date'] }}</p>
+            <form action="{{ url_for('main.remove_track', playlist_name=playlist_name, track_id=track['id']) }}" method="post" onsubmit="return confirm('Are you sure you want to remove this track from the playlist?');">
+                <button type="submit" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-1 px-2 rounded">Remove</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<div class="mt-8 flex justify-center">
+    {% if page > 1 %}
+        <a href="{{ url_for('main.playlist', playlist_name=playlist_name, page=page-1) }}" class="bg-sky-800 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-l">
+            Previous
+        </a>
+    {% endif %}
+    {% if page < total_pages %}
+        <a href="{{ url_for('main.playlist', playlist_name=playlist_name, page=page+1) }}" class="bg-sky-800 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-r">
+            Next
+        </a>
+    {% endif %}
+</div>
+{% endblock %}
