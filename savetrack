@@ -52,14 +52,33 @@ def list_playlists():
         for playlist in playlists:
             print(f"- {os.path.splitext(playlist)[0]}")
 
+def cat_playlist(playlist):
+    if not PLAYLIST_FOLDER:
+        raise EnvironmentError("PLAYLIST_FOLDER environment variable is not set.")
+    
+    csv_file = os.path.join(PLAYLIST_FOLDER, f"{playlist}.csv")
+    
+    if not os.path.exists(csv_file):
+        print(f"Playlist '{playlist}' not found.")
+        return
+    
+    with open(csv_file, 'r', newline='') as file:
+        reader = csv.reader(file)
+        print(f"Contents of '{playlist}' playlist:\n")
+        for row in reader:
+            print(f"{row[0]}, {row[1]} - {row[2]}\nURL: {row[3]}\n")
+
 def print_usage():
     print("Usage:")
     print("  To list playlists: python savetrack.py ls")
     print("  To save a track: python savetrack.py <artist> <track_title> <playlist_name>")
+    print("  To print playlist contents: python savetrack.py cat <playlist_name>")
 
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == "ls":
         list_playlists()
+    elif len(sys.argv) == 3 and sys.argv[1] == "cat":
+        cat_playlist(sys.argv[2])
     elif len(sys.argv) == 4:
         artist, title, playlist = sys.argv[1], sys.argv[2], sys.argv[3]
         save_track(artist, title, playlist)
