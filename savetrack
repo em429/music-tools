@@ -2,12 +2,17 @@
 
 import sys
 import os
-import csv
+import sqlite3
 from datetime import date
 from urllib.parse import quote_plus
 from urllib.request import Request, urlopen
 
-PLAYLIST_FOLDER = os.environ.get('PLAYLIST_FOLDER', '')
+DB_PATH = 'playlists.db'
+
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def get_youtube_url(query):
     url = f"https://www.youtube.com/results?search_query={quote_plus(query)}"
@@ -21,52 +26,84 @@ def get_youtube_url(query):
         return f"https://www.youtube.com{video_id}"
     return ""
 
+def create_playlist_if_not_exists(conn, playlist_name):
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR IGNORE INTO playlists (title) VALUES (?)", (playlist_name,))
+    conn.commit()
+    return cursor.lastrowid or cursor.execute("SELECT id FROM playlists WHERE title = ?", (playlist_name,)).fetchone()[0]
+
 def save_track(artist, title, playlist):
-    if not PLAYLIST_FOLDER:
-        raise EnvironmentError("PLAYLIST_FOLDER environment variable is not set.")
-    
-    os.makedirs(PLAYLIST_FOLDER, exist_ok=True)
-    csv_file = os.path.join(PLAYLIST_FOLDER, f"{playlist}.csv")
-    
+    conn = get_db_connection()
     youtube_url = get_youtube_url(f"{artist} - {title}")
     today = date.today().isoformat()
     
-    with open(csv_file, 'a', newline='') as file:
-        csv.writer(file).writerow([today, artist, title, youtube_url])
-    
-    print(f"Track saved to {csv_file}")
+    try:
+        cursor = conn.cursor()
+        
+        # Insert track
+        cursor.execute("""
+            INSERT INTO tracks (date, artist, title, url)
+            VALUES (?, ?, ?, ?)
+        """, (today, artist, title, youtube_url))
+        track_id = cursor.lastrowid
+        
+        # Get or create playlist
+        playlist_id = create_playlist_if_not_exists(conn, playlist)
+        
+        # Associate track with playlist
+        cursor.execute("""
+            INSERT INTO playlist_tracks (playlist_id, track_id)
+            VALUES (?, ?)
+        """, (playlist_id, track_id))
+        
+        conn.commit()
+        print(f"Track saved to playlist '{playlist}'")
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
 
 def list_playlists():
-    if not PLAYLIST_FOLDER:
-        raise EnvironmentError("PLAYLIST_FOLDER environment variable is not set.")
-    
-    if not os.path.exists(PLAYLIST_FOLDER):
-        print("No playlists found.")
-        return
-    
-    playlists = [f for f in os.listdir(PLAYLIST_FOLDER) if f.endswith('.csv')]
-    if not playlists:
-        print("No playlists found.")
-    else:
-        print("Available playlists:")
-        for playlist in playlists:
-            print(f"- {os.path.splitext(playlist)[0]}")
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT title FROM playlists")
+        playlists = cursor.fetchall()
+        
+        if not playlists:
+            print("No playlists found.")
+        else:
+            print("Available playlists:")
+            for playlist in playlists:
+                print(f"- {playlist['title']}")
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
 
 def cat_playlist(playlist):
-    if not PLAYLIST_FOLDER:
-        raise EnvironmentError("PLAYLIST_FOLDER environment variable is not set.")
-    
-    csv_file = os.path.join(PLAYLIST_FOLDER, f"{playlist}.csv")
-    
-    if not os.path.exists(csv_file):
-        print(f"Playlist '{playlist}' not found.")
-        return
-    
-    with open(csv_file, 'r', newline='') as file:
-        reader = csv.reader(file)
-        print(f"Contents of '{playlist}' playlist:\n")
-        for row in reader:
-            print(f"{row[0]}, {row[1]} - {row[2]}\nURL: {row[3]}\n")
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT t.date, t.artist, t.title, t.url
+            FROM tracks t
+            JOIN playlist_tracks pt ON t.id = pt.track_id
+            JOIN playlists p ON p.id = pt.playlist_id
+            WHERE p.title = ?
+        """, (playlist,))
+        tracks = cursor.fetchall()
+        
+        if not tracks:
+            print(f"Playlist '{playlist}' not found or is empty.")
+        else:
+            print(f"Contents of '{playlist}' playlist:\n")
+            for track in tracks:
+                print(f"{track['date']}, {track['artist']} - {track['title']}\nURL: {track['url']}\n")
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
 
 def print_usage():
     print("Usage:")
@@ -89,9 +126,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except EnvironmentError as e:
-        print(f"Error: {e}")
-        sys.exit(1)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         sys.exit(1)
