@@ -1,3 +1,5 @@
 venv
 playlists.db
 import_csv_to_sqlite.py
+__pycache__
+**/**/__pycache__
