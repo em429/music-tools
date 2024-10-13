@@ -1,2 +1,3 @@
 venv
 playlists.db
+import_csv_to_sqlite.py
