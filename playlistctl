@@ -1,0 +1,244 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import sqlite3
+from datetime import date
+from urllib.parse import quote_plus
+from urllib.request import Request, urlopen
+
+DB_PATH = 'playlists.db'
+
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def get_youtube_url(query):
+    url = f"https://www.youtube.com/results?search_query={quote_plus(query)}"
+    req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    response = urlopen(req).read().decode('utf-8')
+    
+    start_index = response.find('/watch?v=')
+    if start_index != -1:
+        end_index = response.find('"', start_index)
+        video_id = response[start_index:end_index]
+        return f"https://www.youtube.com{video_id}"
+    return ""
+
+def create_playlist_if_not_exists(conn, playlist_name):
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR IGNORE INTO playlists (title) VALUES (?)", (playlist_name,))
+    conn.commit()
+    return cursor.lastrowid or cursor.execute("SELECT id FROM playlists WHERE title = ?", (playlist_name,)).fetchone()[0]
+
+def save_track(artist, title, playlist):
+    conn = get_db_connection()
+    youtube_url = get_youtube_url(f"{artist} - {title}")
+    today = date.today().isoformat()
+    
+    try:
+        cursor = conn.cursor()
+        
+        # Insert track
+        cursor.execute("""
+            INSERT INTO tracks (date, artist, title, url)
+            VALUES (?, ?, ?, ?)
+        """, (today, artist, title, youtube_url))
+        track_id = cursor.lastrowid
+        
+        # Get or create playlist
+        playlist_id = create_playlist_if_not_exists(conn, playlist)
+        
+        # Associate track with playlist
+        cursor.execute("""
+            INSERT INTO playlist_tracks (playlist_id, track_id)
+            VALUES (?, ?)
+        """, (playlist_id, track_id))
+        
+        conn.commit()
+        print(f"Track saved to playlist '{playlist}'")
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
+
+def list_playlists():
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT title FROM playlists")
+        playlists = cursor.fetchall()
+        
+        if not playlists:
+            print("No playlists found.")
+        else:
+            print("Available playlists:")
+            for playlist in playlists:
+                print(f"- {playlist['title']}")
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
+
+def cat_playlist(playlist):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT t.id, t.date, t.artist, t.title, t.url
+            FROM tracks t
+            JOIN playlist_tracks pt ON t.id = pt.track_id
+            JOIN playlists p ON p.id = pt.playlist_id
+            WHERE p.title = ?
+        """, (playlist,))
+        tracks = cursor.fetchall()
+        
+        if not tracks:
+            print(f"Playlist '{playlist}' not found or is empty.")
+        else:
+            print(f"Contents of '{playlist}' playlist:\n")
+            for track in tracks:
+                print(f"ID: {track['id']}, {track['date']}, {track['artist']} - {track['title']}\nURL: {track['url']}\n")
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
+
+def remove_track(playlist, track_id):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Check if the track exists in the specified playlist
+        cursor.execute("""
+            SELECT t.artist, t.title
+            FROM tracks t
+            JOIN playlist_tracks pt ON t.id = pt.track_id
+            JOIN playlists p ON p.id = pt.playlist_id
+            WHERE p.title = ? AND t.id = ?
+        """, (playlist, track_id))
+        track = cursor.fetchone()
+        
+        if not track:
+            print(f"Track with ID {track_id} not found in playlist '{playlist}'.")
+            return
+        
+        # Ask for confirmation
+        confirm = input(f"Are you sure you want to remove '{track['artist']} - {track['title']}' from '{playlist}'? (y/n): ")
+        if confirm.lower() != 'y':
+            print("Track removal cancelled.")
+            return
+        
+        # Remove the track from the playlist
+        cursor.execute("""
+            DELETE FROM playlist_tracks
+            WHERE track_id = ? AND playlist_id = (SELECT id FROM playlists WHERE title = ?)
+        """, (track_id, playlist))
+        
+        # Remove the track from the tracks table if it's not in any other playlist
+        cursor.execute("""
+            DELETE FROM tracks
+            WHERE id = ? AND NOT EXISTS (
+                SELECT 1 FROM playlist_tracks WHERE track_id = ?
+            )
+        """, (track_id, track_id))
+        
+        conn.commit()
+        print(f"Track removed from playlist '{playlist}'")
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
+
+def add_playlist(playlist_name):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO playlists (title) VALUES (?)", (playlist_name,))
+        conn.commit()
+        print(f"Playlist '{playlist_name}' created successfully.")
+    except sqlite3.IntegrityError:
+        print(f"Playlist '{playlist_name}' already exists.")
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
+
+def remove_playlist(playlist_name):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Check if the playlist exists and is empty
+        cursor.execute("""
+            SELECT COUNT(*) as track_count
+            FROM playlist_tracks pt
+            JOIN playlists p ON p.id = pt.playlist_id
+            WHERE p.title = ?
+        """, (playlist_name,))
+        result = cursor.fetchone()
+        
+        if result is None:
+            print(f"Playlist '{playlist_name}' not found.")
+            return
+        
+        if result['track_count'] > 0:
+            print(f"Cannot remove playlist '{playlist_name}'. It is not empty.")
+            return
+        
+        # Ask for confirmation
+        confirm = input(f"Are you sure you want to remove the playlist '{playlist_name}'? (y/n): ")
+        if confirm.lower() != 'y':
+            print("Playlist removal cancelled.")
+            return
+        
+        # Remove the playlist
+        cursor.execute("DELETE FROM playlists WHERE title = ?", (playlist_name,))
+        conn.commit()
+        print(f"Playlist '{playlist_name}' removed successfully.")
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
+
+def print_usage():
+    print("Usage:")
+    print("  To list playlists: playlistctl ls")
+    print("  To save a track: playlistctl save <artist> <track_title> <playlist_name>")
+    print("  To print playlist contents: playlistctl cat <playlist_name>")
+    print("  To remove a track: playlistctl rm <playlist_name> <track_id>")
+    print("  To add a new playlist: playlistctl create <playlist_name>")
+    print("  To remove a playlist: playlistctl rmpl <playlist_name>")
+
+def main():
+    if len(sys.argv) < 2:
+        print_usage()
+        sys.exit(1)
+
+    command = sys.argv[1]
+
+    if command == "ls":
+        list_playlists()
+    elif command == "cat" and len(sys.argv) == 3:
+        cat_playlist(sys.argv[2])
+    elif command == "save" and len(sys.argv) == 5:
+        artist, title, playlist = sys.argv[2], sys.argv[3], sys.argv[4]
+        save_track(artist, title, playlist)
+    elif command == "rm" and len(sys.argv) == 4:
+        playlist, track_id = sys.argv[2], sys.argv[3]
+        remove_track(playlist, int(track_id))
+    elif command == "create" and len(sys.argv) == 3:
+        add_playlist(sys.argv[2])
+    elif command == "rmpl" and len(sys.argv) == 3:
+        remove_playlist(sys.argv[2])
+    else:
+        print_usage()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        sys.exit(1)
