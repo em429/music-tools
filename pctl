@@ -191,7 +191,7 @@ def remove_track(playlist, track_id):
         conn.close()
 
 
-def add_playlist(playlist_name):
+def create_playlist(playlist_name):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -332,7 +332,7 @@ def main():
         playlist, track_id = args.args
         remove_track(playlist, int(track_id))
     elif args.command == "create" and len(args.args) == 1:
-        add_playlist(args.args[0])
+        create_playlist(args.args[0])
     elif args.command in ["rmpl", "rmplaylist"] and len(args.args) == 1:
         remove_playlist(args.args[0])
     elif args.command in ["play", "p"] and len(args.args) == 1:
