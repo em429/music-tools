@@ -13,9 +13,9 @@ import argparse
 
 DB_PATH = os.getenv("PLAYLIST_DB_PATH")
 
-def signal_handler(signal, frame):
-  sys.exit(0)
 
+def signal_handler(signal, frame):
+    sys.exit(0)
 
 
 def get_db_connection():
@@ -43,11 +43,9 @@ def create_playlist_if_not_exists(conn, playlist_name):
         "INSERT OR IGNORE INTO playlists (title) VALUES (?)", (playlist_name,)
     )
     conn.commit()
-    return (
-        cursor.execute(
-            "SELECT id FROM playlists WHERE title = ?", (playlist_name,)
-        ).fetchone()[0]
-    )
+    return cursor.execute(
+        "SELECT id FROM playlists WHERE title = ?", (playlist_name,)
+    ).fetchone()[0]
 
 
 def save_track(artist, title, playlist):
