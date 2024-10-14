@@ -1,7 +1,7 @@
 import math
 import re
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from models import get_playlists, read_playlist, get_random_track, remove_track_from_playlist, create_playlist, remove_playlist, add_track_to_playlist
+from models import get_playlists, read_playlist, get_random_track, remove_track_from_playlist, create_playlist, remove_playlist, add_track_to_playlist, move_track_between_playlists
 
 main = Blueprint('main', __name__)
 
@@ -73,3 +73,18 @@ def add_track():
         flash('All fields are required to add a track')
 
     return redirect(url_for('main.index'))
+
+@main.route('/move_track/<int:track_id>', methods=['POST'])
+def move_track(track_id):
+    from_playlist = request.form.get('from_playlist')
+    to_playlist = request.form.get('to_playlist')
+    
+    if from_playlist and to_playlist:
+        if move_track_between_playlists(track_id, from_playlist, to_playlist):
+            flash(f'Track moved from "{from_playlist}" to "{to_playlist}"')
+        else:
+            flash(f'Failed to move track. It may already exist in the destination playlist.')
+    else:
+        flash('Both source and destination playlists are required to move a track')
+    
+    return redirect(url_for('main.playlist', playlist_name=from_playlist))

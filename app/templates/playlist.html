@@ -37,7 +37,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {% for track in playlist_page %}
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="bg-white rounded-lg shadow-md">
             <div class="aspect-w-16 aspect-h-9 relative">
                 <img src="https://img.youtube.com/vi/{{ get_youtube_id(track['url']) }}/0.jpg" 
                      alt="{{ track['title'] }}" 
@@ -56,9 +56,31 @@
                     <p class="text-sm text-slate-600 mb-2">{{ track['artist'] }}</p>
                 </a>
                 <p class="text-xs text-slate-500 mb-2">{{ track['date'] }}</p>
-                <form action="{{ url_for('main.remove_track', playlist_name=playlist_name, track_id=track['id']) }}" method="post" onsubmit="return confirm('Are you sure you want to remove this track from the playlist?');">
-                    <button type="submit" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-1 px-2 rounded">Remove</button>
-                </form>
+                <div class="flex justify-between items-center">
+                    <form action="{{ url_for('main.remove_track', playlist_name=playlist_name, track_id=track['id']) }}" method="post" onsubmit="return confirm('Are you sure you want to remove this track from the playlist?');">
+                        <button type="submit" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-1 px-2 rounded">Remove</button>
+                    </form>
+                    <div class="relative inline-block text-left">
+                        <button type="button" onclick="toggleDropdown('{{ track['id'] }}')" class="bg-sky-800 hover:bg-sky-700 text-white text-xs font-bold py-1 px-2 rounded">
+                            Move
+                        </button>
+                        <div id="dropdown-{{ track['id'] }}" class="hidden z-50 origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+                            <div class="py-1" role="none">
+                                {% for playlist in playlists %}
+                                    {% if playlist != playlist_name %}
+                                        <form action="{{ url_for('main.move_track', track_id=track['id']) }}" method="post" role="none">
+                                            <input type="hidden" name="from_playlist" value="{{ playlist_name }}">
+                                            <input type="hidden" name="to_playlist" value="{{ playlist }}">
+                                            <button type="submit" class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" onclick="return confirm('Are you sure you want to move this track to {{ playlist }}?');">
+                                                {{ playlist }}
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         {% endfor %}
@@ -74,4 +96,24 @@
     </form>
 </div>
 {% endif %}
+
+<script>
+function toggleDropdown(trackId) {
+    var dropdown = document.getElementById('dropdown-' + trackId);
+    dropdown.classList.toggle('hidden');
+}
+
+// Close the dropdown when clicking outside
+window.onclick = function(event) {
+    if (!event.target.matches('.bg-sky-800')) {
+        var dropdowns = document.getElementsByClassName("origin-top-right");
+        for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (!openDropdown.classList.contains('hidden')) {
+                openDropdown.classList.add('hidden');
+            }
+        }
+    }
+}
+</script>
 {% endblock %}

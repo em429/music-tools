@@ -135,3 +135,31 @@ def add_track_to_playlist(playlist_name, date, artist, title, url):
         ''', (playlist_name, track_id))
         db.commit()
         return True
+
+def move_track_between_playlists(track_id, from_playlist, to_playlist):
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Check if the track is already in the destination playlist
+    cursor.execute('''
+        SELECT 1 FROM playlist_tracks
+        WHERE track_id = ? AND playlist_id = (SELECT id FROM playlists WHERE title = ?)
+    ''', (track_id, to_playlist))
+    
+    if cursor.fetchone():
+        return False  # Track already exists in the destination playlist
+    
+    # Remove the track from the source playlist
+    cursor.execute('''
+        DELETE FROM playlist_tracks
+        WHERE track_id = ? AND playlist_id = (SELECT id FROM playlists WHERE title = ?)
+    ''', (track_id, from_playlist))
+    
+    # Add the track to the destination playlist
+    cursor.execute('''
+        INSERT INTO playlist_tracks (playlist_id, track_id)
+        VALUES ((SELECT id FROM playlists WHERE title = ?), ?)
+    ''', (to_playlist, track_id))
+    
+    db.commit()
+    return True
