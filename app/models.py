@@ -27,7 +27,8 @@ def init_db(app):
              date TEXT,
              artist TEXT,
              title TEXT,
-             url TEXT)
+             url TEXT,
+             play_count INTEGER DEFAULT 0)
         ''')
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS playlists
@@ -54,7 +55,7 @@ def read_playlist(playlist_name, search_query=None, sort_by=None):
     db = get_db()
     cursor = db.cursor()
     query = '''
-        SELECT t.id, t.date, t.artist, t.title, t.url
+        SELECT t.id, t.date, t.artist, t.title, t.url, t.play_count
         FROM tracks t
         JOIN playlist_tracks pt ON t.id = pt.track_id
         JOIN playlists p ON p.id = pt.playlist_id
@@ -69,6 +70,8 @@ def read_playlist(playlist_name, search_query=None, sort_by=None):
     if sort_by:
         if sort_by == 'random':
             query += ' ORDER BY RANDOM()'
+        elif sort_by == 'play_count':
+            query += ' ORDER BY t.play_count DESC'
         else:
             query += f' ORDER BY t.{sort_by}'
     
@@ -78,7 +81,7 @@ def read_playlist(playlist_name, search_query=None, sort_by=None):
 def get_random_track():
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("SELECT date, artist, title, url FROM tracks ORDER BY RANDOM() LIMIT 1")
+    cursor.execute("SELECT date, artist, title, url, play_count FROM tracks ORDER BY RANDOM() LIMIT 1")
     return cursor.fetchone()
 
 def remove_track_from_playlist(track_id, playlist_name):
@@ -122,7 +125,7 @@ def add_track_to_playlist(playlist_name, date, artist, title, url):
     if existing_track:
         track_id = existing_track['id']
     else:
-        cursor.execute("INSERT INTO tracks (date, artist, title, url) VALUES (?, ?, ?, ?)",
+        cursor.execute("INSERT INTO tracks (date, artist, title, url, play_count) VALUES (?, ?, ?, ?, 0)",
                        (date, artist, title, url))
         track_id = cursor.lastrowid
 
@@ -169,3 +172,9 @@ def move_track_between_playlists(track_id, from_playlist, to_playlist):
     
     db.commit()
     return True
+
+def increment_play_count(track_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("UPDATE tracks SET play_count = play_count + 1 WHERE id = ?", (track_id,))
+    db.commit()

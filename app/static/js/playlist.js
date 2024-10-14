@@ -71,5 +71,36 @@ function updateProgressBar(videoId) {
         if (progressBar) {
             progressBar.style.width = progress + '%';
         }
+        
+        // Check if the track has reached 60% and hasn't been counted yet
+        if (progress >= 60 && !player.playCountIncremented) {
+            incrementPlayCount(videoId);
+            player.playCountIncremented = true;
+        }
     }, 1000);
+}
+
+function incrementPlayCount(videoId) {
+    const trackId = document.getElementById('player-' + videoId).getAttribute('data-track-id');
+    fetch('/increment_play_count/' + trackId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Play count incremented for track ' + trackId);
+            // Update the play count display if it exists
+            const playCountElement = document.getElementById('play-count-' + trackId);
+            if (playCountElement) {
+                const currentCount = parseInt(playCountElement.textContent, 10);
+                playCountElement.textContent = (currentCount + 1).toString();
+            }
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
 }

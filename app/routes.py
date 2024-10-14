@@ -1,7 +1,7 @@
 import math
 import re
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from models import get_playlists, read_playlist, get_random_track, remove_track_from_playlist, create_playlist, remove_playlist, add_track_to_playlist, move_track_between_playlists
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from models import get_playlists, read_playlist, get_random_track, remove_track_from_playlist, create_playlist, remove_playlist, add_track_to_playlist, move_track_between_playlists, increment_play_count
 
 main = Blueprint('main', __name__)
 
@@ -89,3 +89,8 @@ def move_track(track_id):
         flash('Both source and destination playlists are required to move a track')
     
     return redirect(url_for('main.playlist', playlist_name=from_playlist))
+
+@main.route('/increment_play_count/<int:track_id>', methods=['POST'])
+def increment_play_count_route(track_id):
+    increment_play_count(track_id)
+    return jsonify(success=True)

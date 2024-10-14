@@ -7,10 +7,12 @@
       onclick="playAudio('{{ get_youtube_id(track['url']) }}', this)"
       title="{{ track['title'] }}"
     />
-    <div
-      id="player-{{ get_youtube_id(track['url']) }}"
-      class="hidden absolute inset-0"
-    ></div>
+    <div id="player-{{ get_youtube_id(track.url) }}" data-track-id="{{ track.id }}"></div>
+    {% if track.play_count > 0 %}
+      <div id="play-count-{{ track.id }}" class="absolute top-2 right-2 bg-slate-800 text-white px-2 py-1 rounded-md opacity-80">
+          {{ track.play_count }}
+      </div>
+    {% endif %}
     <div class="absolute right-0 bottom-0 left-0 h-1 bg-slate-200">
       <div
         id="progress-{{ get_youtube_id(track['url']) }}"
