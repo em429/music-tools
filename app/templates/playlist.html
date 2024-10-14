@@ -46,7 +46,7 @@
 {% else %}
 <p class="text-center mb-4">This playlist is empty.</p>
 <div class="flex justify-center">
-    <form action="{{ url_for('main.remove_playlist', playlist_name=playlist_name) }}" method="post" onsubmit="return confirm('Are you sure you want to remove this empty playlist?');">
+    <form action="{{ url_for('main.remove_playlist_route', playlist_name=playlist_name) }}" method="post" onsubmit="return confirm('Are you sure you want to remove this empty playlist?');">
         <button type="submit" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded">Remove Empty Playlist</button>
     </form>
 </div>

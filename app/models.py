@@ -65,3 +65,64 @@ def get_random_track():
     cursor = db.cursor()
     cursor.execute("SELECT date, artist, title, url FROM tracks ORDER BY RANDOM() LIMIT 1")
     return cursor.fetchone()
+
+def remove_track_from_playlist(track_id, playlist_name):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('''
+        DELETE FROM playlist_tracks
+        WHERE track_id = ? AND playlist_id = (SELECT id FROM playlists WHERE title = ?)
+    ''', (track_id, playlist_name))
+    db.commit()
+
+def create_playlist(playlist_name):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT id FROM playlists WHERE title = ?", (playlist_name,))
+    existing_playlist = cursor.fetchone()
+    if existing_playlist:
+        return False
+    cursor.execute("INSERT INTO playlists (title) VALUES (?)", (playlist_name,))
+    db.commit()
+    return True
+
+def remove_playlist(playlist_name):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM playlist_tracks WHERE playlist_id = (SELECT id FROM playlists WHERE title = ?)", (playlist_name,))
+    count = cursor.fetchone()[0]
+    if count == 0:
+        cursor.execute("DELETE FROM playlists WHERE title = ?", (playlist_name,))
+        db.commit()
+        return True
+    return False
+
+def add_track_to_playlist(playlist_name, date, artist, title, url):
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute("SELECT id FROM tracks WHERE artist = ? AND title = ?", (artist, title))
+    existing_track = cursor.fetchone()
+
+    if existing_track:
+        track_id = existing_track['id']
+    else:
+        cursor.execute("INSERT INTO tracks (date, artist, title, url) VALUES (?, ?, ?, ?)",
+                       (date, artist, title, url))
+        track_id = cursor.lastrowid
+
+    cursor.execute('''
+        SELECT 1 FROM playlist_tracks
+        WHERE playlist_id = (SELECT id FROM playlists WHERE title = ?)
+        AND track_id = ?
+    ''', (playlist_name, track_id))
+    
+    if cursor.fetchone():
+        return False
+    else:
+        cursor.execute('''
+            INSERT INTO playlist_tracks (playlist_id, track_id)
+            VALUES ((SELECT id FROM playlists WHERE title = ?), ?)
+        ''', (playlist_name, track_id))
+        db.commit()
+        return True
