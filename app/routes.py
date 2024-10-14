@@ -28,7 +28,7 @@ def playlist(playlist_name):
     
     playlist_page = playlist[start:end]
     
-    return render_template('playlist.html', playlist_page=playlist_page, page=page, total_pages=total_pages, get_youtube_id=get_youtube_id, playlist_name=playlist_name, playlists=playlists)
+    return render_template('playlist.html', playlist=playlist, playlist_page=playlist_page, page=page, total_pages=total_pages, get_youtube_id=get_youtube_id, playlist_name=playlist_name, playlists=playlists)
 
 @main.route('/remove_track/<playlist_name>/<int:track_id>', methods=['POST'])
 def remove_track(playlist_name, track_id):
