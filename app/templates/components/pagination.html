@@ -1,33 +1,36 @@
-<div class="flex justify-center my-4">
-  <a
-    href="{{ url_for('main.playlist', playlist_name=playlist_name, page=1, search=search_query) }}"
-    class="px-4 py-2 font-bold text-white bg-sky-800 rounded-l hover:bg-sky-700"
-  >
-    First
-  </a>
-  {% if page > 1 %}
-  <a
-    href="{{ url_for('main.playlist', playlist_name=playlist_name, page=page-1, search=search_query) }}"
-    class="px-4 py-2 font-bold text-white bg-sky-800 hover:bg-sky-700"
-  >
-    Previous
-  </a>
-  {% endif %}
-  <span class="px-4 py-2 font-bold text-white bg-sky-800">
-    Page {{ page }} of {{ total_pages }}
-  </span>
-  {% if page < total_pages %}
-  <a
-    href="{{ url_for('main.playlist', playlist_name=playlist_name, page=page+1, search=search_query) }}"
-    class="px-4 py-2 font-bold text-white bg-sky-800 hover:bg-sky-700"
-  >
-    Next
-  </a>
-  {% endif %}
-  <a
-    href="{{ url_for('main.playlist', playlist_name=playlist_name, page=total_pages, search=search_query) }}"
-    class="px-4 py-2 font-bold text-white bg-sky-800 rounded-r hover:bg-sky-700"
-  >
-    Last
-  </a>
+<div class="mx-auto rounded shadow w-fit">
+  <div class="flex justify-center my-8">
+    <a
+      href="{{ url_for('main.playlist', playlist_name=playlist_name, page=1, search=search_query) }}"
+      class="px-4 py-2 font-light rounded-l border-t border-r border-b border-l text-slate-500 bg-slate-100 hover:bg-slate-200"
+    >
+      First
+    </a>
+    {% if page > 1 %}
+    <a
+      href="{{ url_for('main.playlist', playlist_name=playlist_name, page=page-1, search=search_query) }}"
+      class="px-4 py-2 font-light border-t border-r border-b text-slate-500 bg-slate-100 hover:bg-slate-200"
+    >
+      Previous
+    </a>
+    {% endif %}
+    <span class="px-4 py-2 font-light border-t border-r border-b text-slate-500 bg-slate-100 hover:bg-slate-200">
+      Page {{ page }} of {{ total_pages }}
+    </span>
+    {% if page < total_pages %}
+    <a
+      href="{{ url_for('main.playlist', playlist_name=playlist_name, page=page+1, search=search_query) }}"
+      class="px-4 py-2 font-light border-t border-r border-b text-slate-500 bg-slate-100 hover:bg-slate-200"
+    >
+      Next
+    </a>
+    {% endif %}
+    <a
+      href="{{ url_for('main.playlist', playlist_name=playlist_name, page=total_pages, search=search_query) }}"
+      class="px-4 py-2 font-light rounded-r border-t border-r border-b text-slate-500 bg-slate-100 hover:bg-slate-200"
+    >
+      Last
+    </a>
+  </div>
+
 </div>

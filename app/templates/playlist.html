@@ -4,12 +4,12 @@
 <h2 class="mb-4 text-2xl font-semibold">{{ playlist_name }} ({{ playlist|length }} tracks)</h2>
 
 {% if playlist_page %}
-    {% include 'components/search_form.html' %}
+    <div class="flex justify-between items-center">
 
-    {% include 'components/sort_options.html' %}
-
+        {% include 'components/sort_options.html' %}
+        {% include 'components/search_form.html' %}
+    </div>
     {% include 'components/pagination.html' %}
-
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
         {% for track in playlist_page %}
             {% include 'components/track_card.html' %}
