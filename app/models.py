@@ -50,16 +50,23 @@ def get_playlists():
     cursor.execute("SELECT title FROM playlists")
     return [row['title'] for row in cursor.fetchall()]
 
-def read_playlist(playlist_name):
+def read_playlist(playlist_name, search_query=None):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute('''
+    query = '''
         SELECT t.id, t.date, t.artist, t.title, t.url
         FROM tracks t
         JOIN playlist_tracks pt ON t.id = pt.track_id
         JOIN playlists p ON p.id = pt.playlist_id
         WHERE p.title = ?
-    ''', (playlist_name,))
+    '''
+    params = [playlist_name]
+    
+    if search_query:
+        query += ' AND (t.artist LIKE ? OR t.title LIKE ?)'
+        params.extend(['%' + search_query + '%'] * 2)
+    
+    cursor.execute(query, params)
     return cursor.fetchall()
 
 def get_random_track():

@@ -18,7 +18,8 @@ def index():
 @main.route('/playlist/<playlist_name>')
 def playlist(playlist_name):
     playlists = get_playlists()
-    playlist = read_playlist(playlist_name)
+    search_query = request.args.get('search', '')
+    playlist = read_playlist(playlist_name, search_query)
     page = request.args.get('page', 1, type=int)
     per_page = 15
     total_pages = math.ceil(len(playlist) / per_page)
@@ -28,7 +29,7 @@ def playlist(playlist_name):
     
     playlist_page = playlist[start:end]
     
-    return render_template('playlist.html', playlist=playlist, playlist_page=playlist_page, page=page, total_pages=total_pages, get_youtube_id=get_youtube_id, playlist_name=playlist_name, playlists=playlists)
+    return render_template('playlist.html', playlist=playlist, playlist_page=playlist_page, page=page, total_pages=total_pages, get_youtube_id=get_youtube_id, playlist_name=playlist_name, playlists=playlists, search_query=search_query)
 
 @main.route('/remove_track/<playlist_name>/<int:track_id>', methods=['POST'])
 def remove_track(playlist_name, track_id):
