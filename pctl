@@ -51,6 +51,14 @@ def create_playlist_if_not_exists(conn, playlist_name):
 
 
 def save_track(artist, title, playlist):
+    """
+    Saves a track and a youtube url for it to a playlist.
+    The playlist is created if it doesn't already exist.
+
+    :param artist: The artist of the track
+    :param title: The title of the track
+    :param playlist: The name of the playlist to add the track to
+    """
     conn = get_db_connection()
     youtube_url = get_youtube_url(f"{artist} - {title}")
     today = date.today().isoformat()
