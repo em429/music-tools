@@ -42,7 +42,8 @@
                 <img src="https://img.youtube.com/vi/{{ get_youtube_id(track['url']) }}/0.jpg" 
                      alt="{{ track['title'] }}" 
                      class="object-cover w-full h-full cursor-pointer"
-                     onclick="playAudio('{{ get_youtube_id(track['url']) }}', this)">
+                     onclick="playAudio('{{ get_youtube_id(track['url']) }}', this)"
+                     title="{{ track['title'] }}">
                 <div id="player-{{ get_youtube_id(track['url']) }}" class="hidden absolute inset-0"></div>
                 <div class="absolute right-0 bottom-0 left-0 h-1 bg-slate-200">
                     <div id="progress-{{ get_youtube_id(track['url']) }}" class="w-0 h-full bg-red-500"></div>
@@ -50,7 +51,7 @@
             </div>
             <div class="p-4">
                 <a href="{{track['url']}}" class="hover:underline" target="_blank">
-                    <h2 class="mb-2 font-semibold truncate text-slate-800">{{ track['title'] }}</h2>
+                    <h2 class="mb-2 font-semibold truncate text-slate-800" title="{{ track['title'] }}">{{ track['title'] }}</h2>
                 </a>
                 <a href="https://www.discogs.com/search?q={{ track['artist']|urlencode }}&type=all" class="hover:underline" target="_blank">
                     <p class="mb-2 text-sm text-slate-600">{{ track['artist'] }}</p>
