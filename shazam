@@ -111,7 +111,6 @@ query() {
     # Prompt user to save the track
     read -p "Do you want to save this track to a playlist? (y/n) " save_choice
     if [[ $save_choice =~ ^[Yy]$ ]]; then
-        echo "Available playlists:"
         pctl ls
         read -p "Enter the name of the playlist to save to: " playlist_name
         pctl save "$artist" "$title" "$playlist_name"
