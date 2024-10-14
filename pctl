@@ -5,12 +5,17 @@ import os
 import sqlite3
 import random
 import subprocess
+import signal
 from datetime import date
 from urllib.parse import quote_plus
 from urllib.request import Request, urlopen
 import argparse
 
 DB_PATH = os.getenv("PLAYLIST_DB_PATH")
+
+def signal_handler(signal, frame):
+  sys.exit(0)
+
 
 
 def get_db_connection():
@@ -337,6 +342,8 @@ def main():
         remove_playlist(args.args[0])
     elif args.command in ["play", "p"] and len(args.args) == 1:
         play_playlist(args.args[0], shuffle=args.no_shuffle)
+    elif args.command == "radio":
+        play_radio()
     else:
         parser.print_help()
         sys.exit(1)
