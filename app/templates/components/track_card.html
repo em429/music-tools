@@ -3,7 +3,7 @@
     <img
       src="https://img.youtube.com/vi/{{ get_youtube_id(track['url']) }}/0.jpg"
       alt="{{ track['title'] }}"
-      class="object-cover w-full h-full cursor-pointer"
+      class="object-cover rounded-t-lg w-full h-full cursor-pointer"
       onclick="playAudio('{{ get_youtube_id(track['url']) }}', this)"
       title="{{ track['title'] }}"
     />
