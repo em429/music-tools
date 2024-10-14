@@ -3,11 +3,14 @@
 import sys
 import os
 import sqlite3
+import random
+import subprocess
 from datetime import date
 from urllib.parse import quote_plus
 from urllib.request import Request, urlopen
+import argparse
 
-DB_PATH = 'playlists.db'
+DB_PATH = 'app/playlists.db'
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
@@ -202,38 +205,74 @@ def remove_playlist(playlist_name):
     finally:
         conn.close()
 
-def print_usage():
-    print("Usage:")
-    print("  To list playlists: playlistctl ls")
-    print("  To save a track: playlistctl save <artist> <track_title> <playlist_name>")
-    print("  To print playlist contents: playlistctl cat <playlist_name>")
-    print("  To remove a track: playlistctl rm <playlist_name> <track_id>")
-    print("  To add a new playlist: playlistctl create <playlist_name>")
-    print("  To remove a playlist: playlistctl rmpl <playlist_name>")
+def play_playlist(playlist_name, shuffle=True):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT t.url
+            FROM tracks t
+            JOIN playlist_tracks pt ON t.id = pt.track_id
+            JOIN playlists p ON p.id = pt.playlist_id
+            WHERE p.title = ?
+        """, (playlist_name,))
+        tracks = cursor.fetchall()
+        
+        if not tracks:
+            print(f"Playlist '{playlist_name}' not found or is empty.")
+            return
+        
+        urls = [track['url'] for track in tracks]
+        
+        if shuffle:
+            random.shuffle(urls)
+        
+        mpv_command = [
+            "mpv",
+            "--no-video",
+            "--osd-level=3",
+            "--force-window=no",
+            "--osd-duration=99999",
+            "--term-osd-bar",
+            "--term-osd=force",
+            "--term-playing-msg=${playlist-pos-1}/${playlist-count} - ${media-title}"
+        ]
+        
+        mpv_command.extend(urls)
+        
+        subprocess.run(mpv_command)
+        
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
 
 def main():
-    if len(sys.argv) < 2:
-        print_usage()
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Playlist control utility")
+    parser.add_argument("command", choices=["ls", "l", "cat", "save", "s", "rm", "create", "rmpl", "rmplaylist", "play", "p"], help="Command to execute")
+    parser.add_argument("args", nargs="*", help="Additional arguments")
+    parser.add_argument("--no-shuffle", action="store_false", help="Don't shuffle playlist when playing")
 
-    command = sys.argv[1]
+    args = parser.parse_args()
 
-    if command == "ls":
+    if args.command in ["ls", "l"]:
         list_playlists()
-    elif command == "cat" and len(sys.argv) == 3:
-        cat_playlist(sys.argv[2])
-    elif command == "save" and len(sys.argv) == 5:
-        artist, title, playlist = sys.argv[2], sys.argv[3], sys.argv[4]
+    elif args.command == "cat" and len(args.args) == 1:
+        cat_playlist(args.args[0])
+    elif args.command in ["save", "s"] and len(args.args) == 3:
+        artist, title, playlist = args.args
         save_track(artist, title, playlist)
-    elif command == "rm" and len(sys.argv) == 4:
-        playlist, track_id = sys.argv[2], sys.argv[3]
+    elif args.command == "rm" and len(args.args) == 2:
+        playlist, track_id = args.args
         remove_track(playlist, int(track_id))
-    elif command == "create" and len(sys.argv) == 3:
-        add_playlist(sys.argv[2])
-    elif command == "rmpl" and len(sys.argv) == 3:
-        remove_playlist(sys.argv[2])
+    elif args.command == "create" and len(args.args) == 1:
+        add_playlist(args.args[0])
+    elif args.command in [ "rmpl", "rmplaylist" ] and len(args.args) == 1:
+        remove_playlist(args.args[0])
+    elif args.command in ["play", "p"] and len(args.args) == 1:
+        play_playlist(args.args[0], shuffle=args.no_shuffle)
     else:
-        print_usage()
+        parser.print_help()
         sys.exit(1)
 
 if __name__ == "__main__":
