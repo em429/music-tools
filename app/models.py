@@ -1,7 +1,9 @@
+import os
+
 import sqlite3
 from flask import g
 
-DATABASE = 'playlists.db'
+DATABASE = os.getenv("PLAYLIST_DB_PATH")
 
 def get_db():
     db = getattr(g, '_database', None)
