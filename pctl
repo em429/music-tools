@@ -253,6 +253,25 @@ def remove_playlist(playlist_name):
         conn.close()
 
 
+def get_mpv_command(urls, shuffle=True):
+    if shuffle:
+        random.shuffle(urls)
+
+    mpv_command = [
+        "mpv",
+        "--no-video",
+        "--osd-level=3",
+        "--force-window=no",
+        "--osd-duration=99999",
+        "--term-osd-bar",
+        "--term-osd=force",
+        "--term-playing-msg=${playlist-pos-1}/${playlist-count} - ${media-title}",
+    ]
+
+    mpv_command.extend(urls)
+    return mpv_command
+
+
 def play_playlist(playlist_name, shuffle=True):
     conn = get_db_connection()
     try:
@@ -274,23 +293,28 @@ def play_playlist(playlist_name, shuffle=True):
             return
 
         urls = [track["url"] for track in tracks]
+        mpv_command = get_mpv_command(urls, shuffle)
+        subprocess.run(mpv_command)
 
-        if shuffle:
-            random.shuffle(urls)
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
 
-        mpv_command = [
-            "mpv",
-            "--no-video",
-            "--osd-level=3",
-            "--force-window=no",
-            "--osd-duration=99999",
-            "--term-osd-bar",
-            "--term-osd=force",
-            "--term-playing-msg=${playlist-pos-1}/${playlist-count} - ${media-title}",
-        ]
 
-        mpv_command.extend(urls)
+def play_radio():
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT radio_name, url FROM radios")
+        radios = cursor.fetchall()
 
+        if not radios:
+            print("No radios found in the database.")
+            return
+
+        urls = [radio["url"] for radio in radios]
+        mpv_command = get_mpv_command(urls, shuffle=False)
         subprocess.run(mpv_command)
 
     except sqlite3.Error as e:
@@ -318,6 +342,7 @@ def main():
             "rmplaylist",
             "play",
             "p",
+            "radio",
         ],
         help="Command to execute",
     )
