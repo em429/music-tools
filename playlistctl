@@ -10,55 +10,72 @@ from urllib.parse import quote_plus
 from urllib.request import Request, urlopen
 import argparse
 
-DB_PATH = 'app/playlists.db'
+DB_PATH = "app/playlists.db"
+
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
+
 def get_youtube_url(query):
     url = f"https://www.youtube.com/results?search_query={quote_plus(query)}"
-    req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    response = urlopen(req).read().decode('utf-8')
-    
-    start_index = response.find('/watch?v=')
+    req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    response = urlopen(req).read().decode("utf-8")
+
+    start_index = response.find("/watch?v=")
     if start_index != -1:
         end_index = response.find('"', start_index)
         video_id = response[start_index:end_index]
         return f"https://www.youtube.com{video_id}"
     return ""
 
+
 def create_playlist_if_not_exists(conn, playlist_name):
     cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO playlists (title) VALUES (?)", (playlist_name,))
+    cursor.execute(
+        "INSERT OR IGNORE INTO playlists (title) VALUES (?)", (playlist_name,)
+    )
     conn.commit()
-    return cursor.lastrowid or cursor.execute("SELECT id FROM playlists WHERE title = ?", (playlist_name,)).fetchone()[0]
+    return (
+        cursor.lastrowid
+        or cursor.execute(
+            "SELECT id FROM playlists WHERE title = ?", (playlist_name,)
+        ).fetchone()[0]
+    )
+
 
 def save_track(artist, title, playlist):
     conn = get_db_connection()
     youtube_url = get_youtube_url(f"{artist} - {title}")
     today = date.today().isoformat()
-    
+
     try:
         cursor = conn.cursor()
-        
+
         # Insert track
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO tracks (date, artist, title, url)
             VALUES (?, ?, ?, ?)
-        """, (today, artist, title, youtube_url))
+        """,
+            (today, artist, title, youtube_url),
+        )
         track_id = cursor.lastrowid
-        
+
         # Get or create playlist
         playlist_id = create_playlist_if_not_exists(conn, playlist)
-        
+
         # Associate track with playlist
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO playlist_tracks (playlist_id, track_id)
             VALUES (?, ?)
-        """, (playlist_id, track_id))
-        
+        """,
+            (playlist_id, track_id),
+        )
+
         conn.commit()
         print(f"Track saved to playlist '{playlist}'")
     except sqlite3.Error as e:
@@ -66,13 +83,14 @@ def save_track(artist, title, playlist):
     finally:
         conn.close()
 
+
 def list_playlists():
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT title FROM playlists")
         playlists = cursor.fetchall()
-        
+
         if not playlists:
             print("No playlists found.")
         else:
@@ -84,75 +102,94 @@ def list_playlists():
     finally:
         conn.close()
 
+
 def cat_playlist(playlist):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT t.id, t.date, t.artist, t.title, t.url
             FROM tracks t
             JOIN playlist_tracks pt ON t.id = pt.track_id
             JOIN playlists p ON p.id = pt.playlist_id
             WHERE p.title = ?
-        """, (playlist,))
+        """,
+            (playlist,),
+        )
         tracks = cursor.fetchall()
-        
+
         if not tracks:
             print(f"Playlist '{playlist}' not found or is empty.")
         else:
             print(f"Contents of '{playlist}' playlist:\n")
             for track in tracks:
-                print(f"ID: {track['id']}, {track['date']}, {track['artist']} - {track['title']}\nURL: {track['url']}\n")
+                print(
+                    f"ID: {track['id']}, {track['date']}, {track['artist']} - {track['title']}\nURL: {track['url']}\n"
+                )
     except sqlite3.Error as e:
         print(f"An error occurred: {e}")
     finally:
         conn.close()
 
+
 def remove_track(playlist, track_id):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        
+
         # Check if the track exists in the specified playlist
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT t.artist, t.title
             FROM tracks t
             JOIN playlist_tracks pt ON t.id = pt.track_id
             JOIN playlists p ON p.id = pt.playlist_id
             WHERE p.title = ? AND t.id = ?
-        """, (playlist, track_id))
+        """,
+            (playlist, track_id),
+        )
         track = cursor.fetchone()
-        
+
         if not track:
             print(f"Track with ID {track_id} not found in playlist '{playlist}'.")
             return
-        
+
         # Ask for confirmation
-        confirm = input(f"Are you sure you want to remove '{track['artist']} - {track['title']}' from '{playlist}'? (y/n): ")
-        if confirm.lower() != 'y':
+        confirm = input(
+            f"Are you sure you want to remove '{track['artist']} - {track['title']}' from '{playlist}'? (y/n): "
+        )
+        if confirm.lower() != "y":
             print("Track removal cancelled.")
             return
-        
+
         # Remove the track from the playlist
-        cursor.execute("""
+        cursor.execute(
+            """
             DELETE FROM playlist_tracks
             WHERE track_id = ? AND playlist_id = (SELECT id FROM playlists WHERE title = ?)
-        """, (track_id, playlist))
-        
+        """,
+            (track_id, playlist),
+        )
+
         # Remove the track from the tracks table if it's not in any other playlist
-        cursor.execute("""
+        cursor.execute(
+            """
             DELETE FROM tracks
             WHERE id = ? AND NOT EXISTS (
                 SELECT 1 FROM playlist_tracks WHERE track_id = ?
             )
-        """, (track_id, track_id))
-        
+        """,
+            (track_id, track_id),
+        )
+
         conn.commit()
         print(f"Track removed from playlist '{playlist}'")
     except sqlite3.Error as e:
         print(f"An error occurred: {e}")
     finally:
         conn.close()
+
 
 def add_playlist(playlist_name):
     conn = get_db_connection()
@@ -168,34 +205,40 @@ def add_playlist(playlist_name):
     finally:
         conn.close()
 
+
 def remove_playlist(playlist_name):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        
+
         # Check if the playlist exists and is empty
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*) as track_count
             FROM playlist_tracks pt
             JOIN playlists p ON p.id = pt.playlist_id
             WHERE p.title = ?
-        """, (playlist_name,))
+        """,
+            (playlist_name,),
+        )
         result = cursor.fetchone()
-        
+
         if result is None:
             print(f"Playlist '{playlist_name}' not found.")
             return
-        
-        if result['track_count'] > 0:
+
+        if result["track_count"] > 0:
             print(f"Cannot remove playlist '{playlist_name}'. It is not empty.")
             return
-        
+
         # Ask for confirmation
-        confirm = input(f"Are you sure you want to remove the playlist '{playlist_name}'? (y/n): ")
-        if confirm.lower() != 'y':
+        confirm = input(
+            f"Are you sure you want to remove the playlist '{playlist_name}'? (y/n): "
+        )
+        if confirm.lower() != "y":
             print("Playlist removal cancelled.")
             return
-        
+
         # Remove the playlist
         cursor.execute("DELETE FROM playlists WHERE title = ?", (playlist_name,))
         conn.commit()
@@ -205,28 +248,32 @@ def remove_playlist(playlist_name):
     finally:
         conn.close()
 
+
 def play_playlist(playlist_name, shuffle=True):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT t.url
             FROM tracks t
             JOIN playlist_tracks pt ON t.id = pt.track_id
             JOIN playlists p ON p.id = pt.playlist_id
             WHERE p.title = ?
-        """, (playlist_name,))
+        """,
+            (playlist_name,),
+        )
         tracks = cursor.fetchall()
-        
+
         if not tracks:
             print(f"Playlist '{playlist_name}' not found or is empty.")
             return
-        
-        urls = [track['url'] for track in tracks]
-        
+
+        urls = [track["url"] for track in tracks]
+
         if shuffle:
             random.shuffle(urls)
-        
+
         mpv_command = [
             "mpv",
             "--no-video",
@@ -235,23 +282,42 @@ def play_playlist(playlist_name, shuffle=True):
             "--osd-duration=99999",
             "--term-osd-bar",
             "--term-osd=force",
-            "--term-playing-msg=${playlist-pos-1}/${playlist-count} - ${media-title}"
+            "--term-playing-msg=${playlist-pos-1}/${playlist-count} - ${media-title}",
         ]
-        
+
         mpv_command.extend(urls)
-        
+
         subprocess.run(mpv_command)
-        
+
     except sqlite3.Error as e:
         print(f"An error occurred: {e}")
     finally:
         conn.close()
 
+
 def main():
     parser = argparse.ArgumentParser(description="Playlist control utility")
-    parser.add_argument("command", choices=["ls", "l", "cat", "save", "s", "rm", "create", "rmpl", "rmplaylist", "play", "p"], help="Command to execute")
+    parser.add_argument(
+        "command",
+        choices=[
+            "ls",
+            "l",
+            "cat",
+            "save",
+            "s",
+            "rm",
+            "create",
+            "rmpl",
+            "rmplaylist",
+            "play",
+            "p",
+        ],
+        help="Command to execute",
+    )
     parser.add_argument("args", nargs="*", help="Additional arguments")
-    parser.add_argument("--no-shuffle", action="store_false", help="Don't shuffle playlist when playing")
+    parser.add_argument(
+        "--no-shuffle", action="store_false", help="Don't shuffle playlist when playing"
+    )
 
     args = parser.parse_args()
 
@@ -267,13 +333,14 @@ def main():
         remove_track(playlist, int(track_id))
     elif args.command == "create" and len(args.args) == 1:
         add_playlist(args.args[0])
-    elif args.command in [ "rmpl", "rmplaylist" ] and len(args.args) == 1:
+    elif args.command in ["rmpl", "rmplaylist"] and len(args.args) == 1:
         remove_playlist(args.args[0])
     elif args.command in ["play", "p"] and len(args.args) == 1:
         play_playlist(args.args[0], shuffle=args.no_shuffle)
     else:
         parser.print_help()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     try:
