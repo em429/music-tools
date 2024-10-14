@@ -1,20 +1,39 @@
 <div class="inline-block relative text-left">
-    <button type="button" onclick="toggleDropdown('{{ track['id'] }}')" class="px-2 py-1 text-xs font-bold text-white bg-sky-800 rounded hover:bg-sky-700">
-        Move
-    </button>
-    <div id="dropdown-{{ track['id'] }}" class="hidden absolute right-0 z-50 mt-2 w-56 bg-white rounded-md ring-1 ring-black ring-opacity-5 shadow-lg origin-top-right focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
-        <div class="py-1" role="none">
-            {% for playlist in playlists %}
-                {% if playlist != playlist_name %}
-                    <form action="{{ url_for('main.move_track', track_id=track['id']) }}" method="post" role="none">
-                        <input type="hidden" name="from_playlist" value="{{ playlist_name }}">
-                        <input type="hidden" name="to_playlist" value="{{ playlist }}">
-                        <button type="submit" class="block px-4 py-2 w-full text-sm text-left text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" onclick="return confirm('Are you sure you want to move this track to {{ playlist }}?');">
-                            {{ playlist }}
-                        </button>
-                    </form>
-                {% endif %}
-            {% endfor %}
-        </div>
+  <button
+    type="button"
+    onclick="toggleDropdown('{{ track['id'] }}')"
+    class="px-2 py-1 text-xs font-bold text-white bg-sky-800 rounded hover:bg-sky-700"
+  >
+    Move
+  </button>
+  <div
+    id="dropdown-{{ track['id'] }}"
+    class="hidden absolute right-0 z-50 mt-2 w-56 bg-white rounded-md ring-1 ring-black ring-opacity-5 shadow-lg origin-top-right focus:outline-none"
+    role="menu"
+    aria-orientation="vertical"
+    aria-labelledby="menu-button"
+    tabindex="-1"
+  >
+    <div class="py-1" role="none">
+      {% for playlist in playlists %} {% if playlist != playlist_name %}
+      <form
+        action="{{ url_for('main.move_track', track_id=track['id']) }}"
+        method="post"
+        role="none"
+      >
+        <input type="hidden" name="from_playlist" value="{{ playlist_name }}" />
+        <input type="hidden" name="to_playlist" value="{{ playlist }}" />
+        <button
+          type="submit"
+          class="block px-4 py-2 w-full text-sm text-left text-gray-700 hover:bg-gray-100"
+          role="menuitem"
+          tabindex="-1"
+          onclick="return confirm('Are you sure you want to move this track to {{ playlist }}?');"
+        >
+          {{ playlist }}
+        </button>
+      </form>
+      {% endif %} {% endfor %}
     </div>
+  </div>
 </div>
