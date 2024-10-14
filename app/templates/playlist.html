@@ -4,90 +4,17 @@
 <h2 class="mb-4 text-2xl font-semibold">{{ playlist_name }} ({{ playlist|length }} tracks)</h2>
 
 {% if playlist_page %}
-    <form action="{{ url_for('main.playlist', playlist_name=playlist_name) }}" method="get" class="mb-4">
-        <input type="text" name="search" placeholder="Search artist or title" value="{{ search_query }}" class="px-3 py-2 leading-tight text-gray-700 rounded border focus:outline-none focus:shadow-outline">
-        <button type="submit" class="px-4 py-2 font-bold text-white bg-sky-800 rounded hover:bg-sky-700">Search</button>
-    </form>
+    {% include 'components/search_form.html' %}
 
-    {% set pagination_bar %}
-    <div class="flex justify-center my-4">
-        <a href="{{ url_for('main.playlist', playlist_name=playlist_name, page=1, search=search_query) }}" class="px-4 py-2 font-bold text-white bg-sky-800 rounded-l hover:bg-sky-700">
-            First
-        </a>
-        {% if page > 1 %}
-            <a href="{{ url_for('main.playlist', playlist_name=playlist_name, page=page-1, search=search_query) }}" class="px-4 py-2 font-bold text-white bg-sky-800 hover:bg-sky-700">
-                Previous
-            </a>
-        {% endif %}
-        <span class="px-4 py-2 font-bold text-white bg-sky-800">
-            Page {{ page }} of {{ total_pages }}
-        </span>
-        {% if page < total_pages %}
-            <a href="{{ url_for('main.playlist', playlist_name=playlist_name, page=page+1, search=search_query) }}" class="px-4 py-2 font-bold text-white bg-sky-800 hover:bg-sky-700">
-                Next
-            </a>
-        {% endif %}
-        <a href="{{ url_for('main.playlist', playlist_name=playlist_name, page=total_pages, search=search_query) }}" class="px-4 py-2 font-bold text-white bg-sky-800 rounded-r hover:bg-sky-700">
-            Last
-        </a>
-    </div>
-    {% endset %}
-
-    {{ pagination_bar }}
+    {% include 'components/pagination.html' %}
 
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
         {% for track in playlist_page %}
-        <div class="bg-white rounded-lg shadow-md">
-            <div class="relative aspect-w-16 aspect-h-9">
-                <img src="https://img.youtube.com/vi/{{ get_youtube_id(track['url']) }}/0.jpg" 
-                     alt="{{ track['title'] }}" 
-                     class="object-cover w-full h-full cursor-pointer"
-                     onclick="playAudio('{{ get_youtube_id(track['url']) }}', this)"
-                     title="{{ track['title'] }}">
-                <div id="player-{{ get_youtube_id(track['url']) }}" class="hidden absolute inset-0"></div>
-                <div class="absolute right-0 bottom-0 left-0 h-1 bg-slate-200">
-                    <div id="progress-{{ get_youtube_id(track['url']) }}" class="w-0 h-full bg-red-500"></div>
-                </div>
-            </div>
-            <div class="p-4">
-                <a href="{{track['url']}}" class="hover:underline" target="_blank">
-                    <h2 class="mb-2 font-semibold truncate text-slate-800" title="{{ track['title'] }}">{{ track['title'] }}</h2>
-                </a>
-                <a href="https://www.discogs.com/search?q={{ track['artist']|urlencode }}&type=all" class="hover:underline" target="_blank">
-                    <p class="mb-2 text-sm text-slate-600">{{ track['artist'] }}</p>
-                </a>
-                <p class="mb-2 text-xs text-slate-500">{{ track['date'] }}</p>
-                <div class="flex justify-between items-center">
-                    <form action="{{ url_for('main.remove_track', playlist_name=playlist_name, track_id=track['id']) }}" method="post" onsubmit="return confirm('Are you sure you want to remove this track from the playlist?');">
-                        <button type="submit" class="px-2 py-1 text-xs font-bold text-white bg-red-600 rounded hover:bg-red-500">Remove</button>
-                    </form>
-                    <div class="inline-block relative text-left">
-                        <button type="button" onclick="toggleDropdown('{{ track['id'] }}')" class="px-2 py-1 text-xs font-bold text-white bg-sky-800 rounded hover:bg-sky-700">
-                            Move
-                        </button>
-                        <div id="dropdown-{{ track['id'] }}" class="hidden absolute right-0 z-50 mt-2 w-56 bg-white rounded-md ring-1 ring-black ring-opacity-5 shadow-lg origin-top-right focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
-                            <div class="py-1" role="none">
-                                {% for playlist in playlists %}
-                                    {% if playlist != playlist_name %}
-                                        <form action="{{ url_for('main.move_track', track_id=track['id']) }}" method="post" role="none">
-                                            <input type="hidden" name="from_playlist" value="{{ playlist_name }}">
-                                            <input type="hidden" name="to_playlist" value="{{ playlist }}">
-                                            <button type="submit" class="block px-4 py-2 w-full text-sm text-left text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" onclick="return confirm('Are you sure you want to move this track to {{ playlist }}?');">
-                                                {{ playlist }}
-                                            </button>
-                                        </form>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            {% include 'components/track_card.html' %}
         {% endfor %}
     </div>
 
-    {{ pagination_bar }}
+    {% include 'components/pagination.html' %}
 
 {% else %}
 <p class="mb-4 text-center">This playlist is empty.</p>
@@ -98,23 +25,7 @@
 </div>
 {% endif %}
 
-<script>
-function toggleDropdown(trackId) {
-    var dropdown = document.getElementById('dropdown-' + trackId);
-    dropdown.classList.toggle('hidden');
-}
+{% endblock %}
 
-// Close the dropdown when clicking outside
-window.onclick = function(event) {
-    if (!event.target.matches('.bg-sky-800')) {
-        var dropdowns = document.getElementsByClassName("origin-top-right");
-        for (var i = 0; i < dropdowns.length; i++) {
-            var openDropdown = dropdowns[i];
-            if (!openDropdown.classList.contains('hidden')) {
-                openDropdown.classList.add('hidden');
-            }
-        }
-    }
-}
-</script>
+{% block scripts %}
 {% endblock %}
