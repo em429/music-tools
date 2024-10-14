@@ -44,8 +44,7 @@ def create_playlist_if_not_exists(conn, playlist_name):
     )
     conn.commit()
     return (
-        cursor.lastrowid
-        or cursor.execute(
+        cursor.execute(
             "SELECT id FROM playlists WHERE title = ?", (playlist_name,)
         ).fetchone()[0]
     )
