@@ -301,6 +301,9 @@ def play_playlist(playlist_name, shuffle=True):
 
 
 def main():
+    # Handle CNTRL-C gracefully
+    signal.signal(signal.SIGINT, signal_handler)
+
     parser = argparse.ArgumentParser(description="Playlist control utility")
     parser.add_argument(
         "command",
