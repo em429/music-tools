@@ -1,7 +1,7 @@
 import os
-
 import sqlite3
 from flask import g
+import random
 
 DATABASE = os.getenv("PLAYLIST_DB_PATH")
 
@@ -50,7 +50,7 @@ def get_playlists():
     cursor.execute("SELECT title FROM playlists")
     return [row['title'] for row in cursor.fetchall()]
 
-def read_playlist(playlist_name, search_query=None):
+def read_playlist(playlist_name, search_query=None, sort_by=None):
     db = get_db()
     cursor = db.cursor()
     query = '''
@@ -65,6 +65,12 @@ def read_playlist(playlist_name, search_query=None):
     if search_query:
         query += ' AND (t.artist LIKE ? OR t.title LIKE ?)'
         params.extend(['%' + search_query + '%'] * 2)
+    
+    if sort_by:
+        if sort_by == 'random':
+            query += ' ORDER BY RANDOM()'
+        else:
+            query += f' ORDER BY t.{sort_by}'
     
     cursor.execute(query, params)
     return cursor.fetchall()
