@@ -5,7 +5,7 @@ function toggleDropdown(trackId) {
 
 // Close the dropdown when clicking outside
 window.onclick = function(event) {
-    if (!event.target.matches('.bg-sky-800')) {
+    if (!event.target.matches('.move-dropdown')) {
         var dropdowns = document.getElementsByClassName("origin-top-right");
         for (var i = 0; i < dropdowns.length; i++) {
             var openDropdown = dropdowns[i];

@@ -34,21 +34,12 @@
     >
       <p class="mb-2 text-sm text-slate-600">{{ track['artist'] }}</p>
     </a>
-    <p class="mb-2 text-xs text-slate-500">{{ track['date'] }}</p>
     <div class="flex justify-between items-center">
-      <form
-        action="{{ url_for('main.remove_track', playlist_name=playlist_name, track_id=track['id']) }}"
-        method="post"
-        onsubmit="return confirm('Are you sure you want to remove this track from the playlist?');"
-      >
-        <button
-          type="submit"
-          class="px-2 py-1 text-xs font-bold text-white bg-red-600 rounded hover:bg-red-500"
-        >
-          Remove
-        </button>
-      </form>
-      {% include 'components/move_dropdown.html' %}
+      <p class="text-sm text-slate-500">{{ track['date'] }}</p>
+      <div class="flex items-center space-x-2">
+        {% include 'components/move_dropdown.html' %}
+        {% include 'components/remove_track_button.html' %}
+      </div>
     </div>
   </div>
 </div>
