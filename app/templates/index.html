@@ -1,27 +1,27 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-2xl container mx-auto">
+<div class="container mx-auto max-w-2xl">
 <div class="text-center">
-    <h2 class="text-2xl font-semibold mb-4">Random Track</h2>
+    <h2 class="mb-4 text-2xl font-semibold">Random Track</h2>
     {% if random_track %}
-    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="aspect-w-16 aspect-h-9 relative">
+    <div class="overflow-hidden mx-auto max-w-2xl bg-white rounded-lg shadow-md">
+        <div class="relative aspect-w-16 aspect-h-9">
             <img src="https://img.youtube.com/vi/{{ get_youtube_id(random_track['url']) }}/0.jpg" 
                  alt="{{ random_track['title'] }}" 
-                 class="w-full h-full object-cover cursor-pointer"
+                 class="object-cover w-full h-full cursor-pointer"
                  onclick="playAudio('{{ get_youtube_id(random_track['url']) }}', this)">
-            <div id="player-{{ get_youtube_id(random_track['url']) }}" class="absolute inset-0 hidden"></div>
-            <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-200">
-                <div id="progress-{{ get_youtube_id(random_track['url']) }}" class="h-full bg-red-500 w-0"></div>
+            <div id="player-{{ get_youtube_id(random_track['url']) }}" class="hidden absolute inset-0"></div>
+            <div class="absolute right-0 bottom-0 left-0 h-1 bg-slate-200">
+                <div id="progress-{{ get_youtube_id(random_track['url']) }}" class="w-0 h-full bg-red-500"></div>
             </div>
         </div>
         <div class="p-4">
             <a href="{{random_track['url']}}" class="hover:underline" target="_blank">
-                <h2 class="text-xl font-semibold mb-2 text-slate-800">{{ random_track['title'] }}</h2>
+                <h2 class="mb-2 text-xl font-semibold text-slate-800">{{ random_track['title'] }}</h2>
             </a>
             <a href="https://www.discogs.com/search?q={{ random_track['artist']|urlencode }}&type=all" class="hover:underline" target="_blank">
-                <p class="text-slate-600 mb-2">{{ random_track['artist'] }}</p>
+                <p class="mb-2 text-slate-600">{{ random_track['artist'] }}</p>
             </a>
             <p class="text-sm text-slate-500">{{ random_track['date'] }}</p>
         </div>
@@ -31,17 +31,17 @@
     {% endif %}
 </div>
 <div class="mt-8">
-    <h3 class="text-xl font-semibold mb-4">Create New Playlist</h3>
+    <h3 class="mb-4 text-xl font-semibold">Create New Playlist</h3>
     <form action="{{ url_for('main.create_playlist_route') }}" method="post" class="flex items-center">
-        <input type="text" name="playlist_name" placeholder="Enter playlist name" required class="flex-grow p-2 border rounded-l">
-        <button type="submit" class="bg-sky-800 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-r">Create</button>
+        <input type="text" name="playlist_name" placeholder="Enter playlist name" required class="flex-grow p-2 rounded-l border">
+        <button type="submit" class="px-4 py-2 font-bold text-white bg-sky-800 rounded-r hover:bg-sky-700">Create</button>
     </form>
 </div>
 <div class="mt-8">
-    <h3 class="text-xl font-semibold mb-4">There are two methods to save playlists:</h3>
+    <h3 class="mb-4 text-xl font-semibold">There are two methods to save playlists:</h3>
     <ul class="space-y-2 list-disc list-inside">
-        <li class="">Run <code class="bg-sky-200 p-1 rounded">pctl save "$artist" "$tracktitle" $playlist</code> on the command line</li>
-        <li>Run <code class="bg-sky-200 p-1 rounded ">shazam</code> on the command line</li>
+        <li class="">Run <code class="p-1 bg-sky-200 rounded">pctl save "$artist" "$tracktitle" $playlist</code> on the command line</li>
+        <li>Run <code class="p-1 bg-sky-200 rounded">shazam</code> on the command line</li>
     </ul>
 
 </div>
