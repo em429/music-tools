@@ -104,3 +104,16 @@ function incrementPlayCount(videoId) {
         console.error('Error:', error);
     });
 }
+
+function toggleSortDirection(form) {
+    const directionInput = form.querySelector('input[name="direction"]');
+    const sortIcon = form.querySelector('svg');
+    if (directionInput.value === 'ASC') {
+        directionInput.value = 'DESC';
+        sortIcon.classList.add('rotate-180');
+    } else {
+        directionInput.value = 'ASC';
+        sortIcon.classList.remove('rotate-180');
+    }
+    form.submit();
+}

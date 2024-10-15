@@ -51,7 +51,7 @@ def get_playlists():
     cursor.execute("SELECT title FROM playlists")
     return [row['title'] for row in cursor.fetchall()]
 
-def read_playlist(playlist_name, search_query=None, sort_by=None):
+def read_playlist(playlist_name, search_query=None, sort_by=None, sort_direction='ASC'):
     db = get_db()
     cursor = db.cursor()
     query = '''
@@ -71,9 +71,9 @@ def read_playlist(playlist_name, search_query=None, sort_by=None):
         if sort_by == 'random':
             query += ' ORDER BY RANDOM()'
         elif sort_by == 'play_count':
-            query += ' ORDER BY t.play_count DESC'
+            query += f' ORDER BY t.play_count {sort_direction}'
         else:
-            query += f' ORDER BY t.{sort_by}'
+            query += f' ORDER BY t.{sort_by} {sort_direction}'
     
     cursor.execute(query, params)
     return cursor.fetchall()
