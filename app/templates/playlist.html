@@ -1,15 +1,22 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2 class="mb-4 text-2xl font-semibold">{{ playlist_name }} ({{ playlist|length }} tracks)</h2>
+<div class="flex justify-between items-center space-x-3">
+    <h2 class="text-2xl font-semibold">{{ playlist_name }} ({{ playlist|length }} tracks)</h2>
+    {% include 'components/sort_options.html' %}
+</div>
 
 {% if playlist_page %}
-    <div class="flex justify-between items-center">
+    <div class="grid grid-cols-1 gap-4 items-center mb-6 md:grid-cols-2">
 
-        {% include 'components/sort_options.html' %}
-        {% include 'components/search_form.html' %}
+        <div class="">
+            {% include 'components/pagination.html' %}
+        </div>
+        <div class="">
+            {% include 'components/search_form.html' %}
+        </div>
     </div>
-    {% include 'components/pagination.html' %}
+
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
         {% for track in playlist_page %}
             {% include 'components/track_card.html' %}

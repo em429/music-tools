@@ -2,7 +2,7 @@
   <button
     type="button"
     onclick="toggleDropdown('{{ track['id'] }}')"
-    class="px-2 h-8 text-xs font-medium rounded border move-dropdown text-stone-400 hover:bg-stone-100"
+    class="px-2 h-8 text-xs font-medium rounded border border-stone-300 move-dropdown text-stone-400 hover:bg-stone-100"
   >
     Move
   </button>
@@ -25,7 +25,7 @@
         <input type="hidden" name="to_playlist" value="{{ playlist }}" />
         <button
           type="submit"
-          class="block px-4 py-2 w-full text-sm text-left text-gray-700 hover:bg-gray-100"
+          class="block px-4 py-2 w-full text-sm text-left text-stone-700 hover:bg-stone-100"
           role="menuitem"
           tabindex="-1"
           onclick="return confirm('Are you sure you want to move this track to {{ playlist }}?');"

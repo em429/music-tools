@@ -8,7 +8,7 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body class="min-h-screen bg-stone-100">
-    <nav class="p-4 bg-indigo-800">
+    <nav class="p-2 bg-indigo-800">
         <div class="container flex justify-center mx-auto space-x-3 text-white">
             <a href="{{ url_for('main.index') }}" class="hover:underline">home</a>
             {% for playlist in playlists %}
@@ -28,7 +28,8 @@
             </div>
           {% endif %}
         {% endwith %}
-        {% block content %}{% endblock %}
+        {% block content %}
+        {% endblock %}
     </div>
 
     <script src="{{ url_for('static', filename='js/playlist.js') }}"></script>

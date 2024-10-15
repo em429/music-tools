@@ -1,7 +1,13 @@
-<form action="{{ url_for('main.playlist', playlist_name=playlist_name) }}" method="get" class="mb-4">
+
+<form class="flex items-center space-x-2" action="{{ url_for('main.playlist', playlist_name=playlist_name) }}" method="get">
     <input type="hidden" name="search" value="{{ search_query }}">
-    <label for="sort" class="mr-2">Sort by:</label>
-    <select name="sort" id="sort" onchange="this.form.submit()" class="p-2 border rounded">
+    <label for="sort" class="text-stone-600">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+            <path fill-rule="evenodd" d="M2.24 6.8a.75.75 0 0 0 1.06-.04l1.95-2.1v8.59a.75.75 0 0 0 1.5 0V4.66l1.95 2.1a.75.75 0 1 0 1.1-1.02l-3.25-3.5a.75.75 0 0 0-1.1 0L2.2 5.74a.75.75 0 0 0 .04 1.06Zm8 6.4a.75.75 0 0 0-.04 1.06l3.25 3.5a.75.75 0 0 0 1.1 0l3.25-3.5a.75.75 0 1 0-1.1-1.02l-1.95 2.1V6.75a.75.75 0 0 0-1.5 0v8.59l-1.95-2.1a.75.75 0 0 0-1.06-.04Z" clip-rule="evenodd" />
+        </svg>
+
+    </label>
+    <select name="sort" id="sort" onchange="this.form.submit()" class="p-2 rounded border border-stone-300 bg-stone-200 text-stone-600">
         <option value="date" {% if sort_by == 'date' %}selected{% endif %}>Date</option>
         <option value="artist" {% if sort_by == 'artist' %}selected{% endif %}>Artist</option>
         <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title</option>

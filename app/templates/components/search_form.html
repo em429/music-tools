@@ -1,18 +1,18 @@
 <form
   action="{{ url_for('main.playlist', playlist_name=playlist_name) }}"
   method="get"
-  class="flex items-stretch space-x-2"
+  class="flex justify-center space-x-2 md:justify-end"
 >
   <input
     type="text"
     name="search"
     placeholder="Search artist or title"
     value="{{ search_query }}"
-    class="px-3 py-2 leading-tight text-gray-700 rounded border focus:outline-none focus:shadow-outline"
+    class="px-3 py-2 w-full h-10 rounded border lg:w-1/2 eading-tight placeholder-stone-300 text-stone-700 border-stone-300 focus:outline-none focus:shadow-outline"
   />
   <button
     type="submit"
-    class="px-4 py-2 font-bold text-white bg-indigo-800 rounded hover:bg-indigo-700"
+    class="px-4 py-2 h-10 font-bold rounded border bg-stone-200 border-stone-300 text-stone-400 hover:bg-stone-300"
   >
     Search
   </button>
