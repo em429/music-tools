@@ -4,3 +4,4 @@ import_csv_to_sqlite.py
 __pycache__
 **/**/__pycache__
 .DS_Store
+deploy.sh
