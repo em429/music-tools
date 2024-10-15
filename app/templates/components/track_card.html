@@ -9,11 +9,11 @@
     />
     <div id="player-{{ get_youtube_id(track.url) }}" data-track-id="{{ track.id }}"></div>
     {% if track.play_count > 0 %}
-      <div id="play-count-{{ track.id }}" class="absolute top-2 right-2 bg-slate-800 text-white px-2 py-1 rounded-md opacity-80">
+      <div id="play-count-{{ track.id }}" class="absolute top-2 right-2 bg-stone-800 text-white px-2 py-1 rounded-md opacity-80">
           {{ track.play_count }}
       </div>
     {% endif %}
-    <div class="absolute right-0 bottom-0 left-0 h-1 bg-slate-200">
+    <div class="absolute right-0 bottom-0 left-0 h-1 bg-stone-200">
       <div
         id="progress-{{ get_youtube_id(track['url']) }}"
         class="w-0 h-full bg-indigo-500"
@@ -23,7 +23,7 @@
   <div class="p-4">
     <a href="{{track['url']}}" class="hover:underline" target="_blank">
       <h2
-        class="mb-2 font-semibold truncate text-slate-800"
+        class="mb-2 font-semibold truncate text-stone-800"
         title="{{ track['title'] }}"
       >
         {{ track['title'] }}
@@ -34,10 +34,10 @@
       class="hover:underline"
       target="_blank"
     >
-      <p class="mb-2 text-sm text-slate-600">{{ track['artist'] }}</p>
+      <p class="mb-2 text-sm text-stone-600">{{ track['artist'] }}</p>
     </a>
     <div class="flex justify-between items-center">
-      <p class="text-sm text-slate-500">{{ track['date'] }}</p>
+      <p class="text-sm text-stone-500">{{ track['date'] }}</p>
       <div class="flex items-center space-x-2">
         {% include 'components/move_dropdown.html' %}
         {% include 'components/remove_track_button.html' %}
