@@ -9,7 +9,7 @@
 </head>
 <body class="min-h-screen bg-stone-100">
     <nav class="p-2 bg-indigo-800">
-        <div class="container flex justify-center mx-auto space-x-3 text-white">
+        <div class="container flex justify-center mx-auto space-x-3 text-stone-50">
             <a href="{{ url_for('main.index') }}" class="hover:underline">home</a>
             {% for playlist in playlists %}
             <a href="{{ url_for('main.playlist', playlist_name=playlist) }}" class="hover:underline">{{ playlist }}</a>
